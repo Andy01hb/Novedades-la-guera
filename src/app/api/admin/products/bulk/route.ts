@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     if (result.success) {
       valid.push(result.data)
     } else {
-      const reason = result.error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ')
+      const reason = result.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ')
       errors.push({ row: i + 2, reason }) // +2 porque fila 1 es encabezado
     }
   }
