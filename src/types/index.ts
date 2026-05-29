@@ -73,7 +73,7 @@ export const CATEGORY_COLORS: Record<string, string> = {
   BELLEZA: 'bg-pink/10',
   ACCESORIOS: 'bg-yellow/20',
   HOGAR: 'bg-green-100',
-  DULCERIA: 'bg-pink-light/10',
+  DULCERIA: 'bg-[#FF6BB3]/10',
   NOVEDADES: 'bg-purple-100',
 }
 
