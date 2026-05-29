@@ -1,5 +1,5 @@
 'use client'
-import { CldUploadWidget } from 'next-cloudinary'
+import { CldUploadWidget, CloudinaryUploadWidgetResults } from 'next-cloudinary'
 import Image from 'next/image'
 import { Upload } from 'lucide-react'
 
@@ -11,8 +11,9 @@ interface Props {
 const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET ?? ''
 
 export default function ProductImageUploader({ value, onChange }: Props) {
-  const handleUpload = (result: { info?: { secure_url?: string } }) => {
-    const url = result?.info?.secure_url
+  const handleUpload = (result: CloudinaryUploadWidgetResults) => {
+    const info = result?.info
+    const url = typeof info === 'object' && info !== null ? (info as { secure_url?: string }).secure_url : undefined
     if (url) onChange(url)
   }
 

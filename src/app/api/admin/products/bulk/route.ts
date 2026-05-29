@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
 
   for (let i = 0; i < valid.length; i++) {
     try {
-      await prisma.product.create({ data: valid[i] })
+      await prisma.product.create({ data: { ...valid[i], imageUrl: valid[i].imageUrl ?? '' } })
       imported++
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error al insertar'
