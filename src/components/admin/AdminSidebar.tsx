@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation'
 import { signOut } from 'next-auth/react'
 import { LogOut, ExternalLink } from 'lucide-react'
 import { NAV_ITEMS } from './nav-items'
+import StoreLogo from '@/components/ui/StoreLogo'
 
 export default function AdminSidebar() {
   const pathname = usePathname()
@@ -13,9 +14,7 @@ export default function AdminSidebar() {
       {/* Logo */}
       <div className="p-5 border-b border-admin-border">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink to-[#FF6BB3] flex items-center justify-center text-white font-black text-xs">
-            LG
-          </div>
+          <StoreLogo size={32} />
           <div>
             <p className="text-white font-bold text-xs leading-none">La Güera</p>
             <p className="text-admin-muted text-xs">Admin</p>

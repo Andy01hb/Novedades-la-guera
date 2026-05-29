@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import StoreLogo from '@/components/ui/StoreLogo'
 
 export default function AdminLoginPage() {
   const router = useRouter()
@@ -37,8 +38,8 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-pink to-[#FF6BB3] flex items-center justify-center text-white font-black text-xl mx-auto mb-3">
-            LG
+          <div className="mx-auto mb-3 w-fit">
+            <StoreLogo size={64} />
           </div>
           <h1 className="text-white font-black text-2xl">Panel Admin</h1>
           <p className="text-admin-muted text-sm mt-1">Novedades La Güera</p>

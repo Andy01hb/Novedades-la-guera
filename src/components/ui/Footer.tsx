@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Share2, Globe } from 'lucide-react'
+import StoreLogo from '@/components/ui/StoreLogo'
 
 const STORE_LINKS = [
   { href: '/', label: 'Inicio' },
@@ -22,9 +23,7 @@ export default function Footer() {
           {/* Columna 1: Marca + Newsletter */}
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink to-[#FF6BB3] flex items-center justify-center text-white font-black text-sm">
-                LG
-              </div>
+              <StoreLogo size={40} />
               <div>
                 <p className="font-black text-sm leading-none">Novedades</p>
                 <p className="font-black text-pink text-sm leading-none">La Güera</p>

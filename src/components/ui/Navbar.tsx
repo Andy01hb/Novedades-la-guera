@@ -3,6 +3,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { ShoppingCart, Search, Menu, X } from 'lucide-react'
 import { useCart } from '@/store/cart'
+import StoreLogo from '@/components/ui/StoreLogo'
 
 const NAV_LINKS = [
   { href: '/', label: 'Inicio' },
@@ -22,9 +23,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 shrink-0">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink to-[#FF6BB3] flex items-center justify-center text-white font-black text-sm">
-            LG
-          </div>
+          <StoreLogo size={40} />
           <div className="hidden sm:block">
             <p className="font-black text-dark text-sm leading-none">Novedades</p>
             <p className="font-black text-pink text-sm leading-none">La Güera</p>
