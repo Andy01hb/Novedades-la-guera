@@ -6,3 +6,101 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+enum Category {
+  BELLEZA
+  ACCESORIOS
+  HOGAR
+  DULCERIA
+  NOVEDADES
+}
+
+enum ProductBadge {
+  NUEVO
+  OFERTA
+  MAYOREO
+}
+
+enum OrderStatus {
+  PENDING
+  PREPARING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum DeliveryType {
+  LOCAL
+  PAQUETERIA
+  RECOGER
+}
+
+model Product {
+  id             String        @id @default(cuid())
+  name           String
+  slug           String        @unique
+  description    String?
+  category       Category
+  badge          ProductBadge?
+  imageUrl       String
+  priceRetail    Int           // centavos MXN
+  priceWholesale Int?          // centavos MXN, null si no tiene mayoreo
+  wholesaleMin   Int?          // mínimo de piezas para mayoreo
+  stock          Int           @default(0)
+  active         Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  orderItems     OrderItem[]
+}
+
+model Order {
+  id                    String       @id @default(cuid())
+  customerName          String
+  customerPhone         String
+  customerEmail         String
+  street                String
+  colonia               String
+  postalCode            String
+  city                  String
+  state                 String
+  references            String?
+  deliveryType          DeliveryType
+  deliveryCost          Int          // centavos MXN
+  subtotal              Int          // centavos MXN
+  total                 Int          // centavos MXN
+  status                OrderStatus  @default(PENDING)
+  stripePaymentIntentId String?      @unique
+  paidAt                DateTime?
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+  items                 OrderItem[]
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  productId String
+  quantity  Int
+  unitPrice Int     // precio al momento de la compra (centavos)
+  order     Order   @relation(fields: [orderId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model Review {
+  id           String   @id @default(cuid())
+  customerName String
+  rating       Int      // 1-5
+  text         String
+  productName  String
+  avatarColor  String   // hex color para avatar placeholder
+  verified     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+}
+
+model AdminUser {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String   // bcrypt hash
+  name      String
+  createdAt DateTime @default(now())
+}
