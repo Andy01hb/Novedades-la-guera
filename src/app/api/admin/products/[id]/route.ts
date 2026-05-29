@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
-import { Category, ProductBadge } from '@prisma/client'
+import { Category, ProductBadge, Prisma } from '@prisma/client'
 
 const UpdateSchema = z.object({
   name: z.string().min(2).optional(),
@@ -37,8 +37,13 @@ export async function PATCH(
       data: parsed.data,
     })
     return NextResponse.json(product)
-  } catch {
-    return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 })
+  } catch (error) {
+    const isNotFound =
+      error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025'
+    return NextResponse.json(
+      { error: isNotFound ? 'Producto no encontrado' : 'Error del servidor' },
+      { status: isNotFound ? 404 : 500 }
+    )
   }
 }
 
@@ -55,7 +60,12 @@ export async function DELETE(
       data: { active: false },
     })
     return NextResponse.json({ ok: true })
-  } catch {
-    return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 })
+  } catch (error) {
+    const isNotFound =
+      error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025'
+    return NextResponse.json(
+      { error: isNotFound ? 'Producto no encontrado' : 'Error del servidor' },
+      { status: isNotFound ? 404 : 500 }
+    )
   }
 }

@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
-import { Category, ProductBadge } from '@prisma/client'
+import { Category, ProductBadge, Prisma } from '@prisma/client'
 
 const ProductSchema = z.object({
   name: z.string().min(2),
@@ -38,9 +38,11 @@ export async function POST(req: NextRequest) {
     const product = await prisma.product.create({ data: parsed.data })
     return NextResponse.json(product, { status: 201 })
   } catch (error) {
-    const message = error instanceof Error && error.message.includes('Unique')
+    const isUniqueViolation =
+      error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002'
+    const message = isUniqueViolation
       ? 'Ya existe un producto con ese slug'
       : 'Error al crear el producto'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return NextResponse.json({ error: message }, { status: isUniqueViolation ? 409 : 500 })
   }
 }
