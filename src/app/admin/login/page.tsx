@@ -15,17 +15,20 @@ export default function AdminLoginPage() {
     setLoading(true)
     setError(null)
 
-    const result = await signIn('credentials', {
-      email,
-      password,
-      redirect: false,
-    })
+    try {
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      })
 
-    if (result?.error) {
-      setError('Correo o contraseña incorrectos')
+      if (result?.error) {
+        setError('Correo o contraseña incorrectos')
+      } else {
+        router.push('/admin/dashboard')
+      }
+    } finally {
       setLoading(false)
-    } else {
-      router.push('/admin/dashboard')
     }
   }
 
