@@ -8,7 +8,8 @@ export async function GET(req: NextRequest) {
   const badge = searchParams.get('badge')
   const mayoreo = searchParams.get('mayoreo')
   const search = searchParams.get('q')
-  const take = parseInt(searchParams.get('take') ?? '20')
+  const takeRaw = parseInt(searchParams.get('take') ?? '20')
+  const take = Number.isNaN(takeRaw) ? 20 : Math.min(Math.max(takeRaw, 1), 100)
 
   const where: Record<string, unknown> = { active: true }
 
@@ -22,7 +23,8 @@ export async function GET(req: NextRequest) {
     where.priceWholesale = { not: null }
   }
   if (search) {
-    where.name = { contains: search, mode: 'insensitive' }
+    const q = search.slice(0, 100)
+    where.name = { contains: q, mode: 'insensitive' }
   }
 
   try {

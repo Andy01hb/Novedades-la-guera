@@ -19,8 +19,13 @@ export async function PATCH(request: NextRequest) {
   const body = await request.json()
   const { key, value } = body as { key?: string; value?: unknown }
 
+  const ALLOWED_KEYS = ['logo_url', 'hero_mascot_url']
+
   if (!key || typeof value !== 'string') {
     return NextResponse.json({ error: 'key y value requeridos' }, { status: 400 })
+  }
+  if (!ALLOWED_KEYS.includes(key)) {
+    return NextResponse.json({ error: 'Clave no permitida' }, { status: 400 })
   }
 
   const setting = await prisma.siteSettings.upsert({
