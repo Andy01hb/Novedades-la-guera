@@ -1,0 +1,8 @@
+{
+  "name": "Novedades La Güera",
+  "short_name": "La Güera",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFF5FA",
+  "theme_color": "#E91E8C"
+}
