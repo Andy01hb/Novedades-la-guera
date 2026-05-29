@@ -1,5 +1,6 @@
 import { getServerSession } from 'next-auth'
 import { redirect, notFound } from 'next/navigation'
+import Link from 'next/link'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import OrderStatusBadge from '@/components/ui/OrderStatusBadge'
@@ -46,9 +47,9 @@ export default async function PedidoDetailPage({ params }: { params: { id: strin
     <div className="p-4 lg:p-8 max-w-4xl">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <a href="/admin/pedidos" className="text-admin-muted hover:text-white text-sm transition-colors">
+        <Link href="/admin/pedidos" className="text-admin-muted hover:text-white text-sm transition-colors">
           ← Pedidos
-        </a>
+        </Link>
         <span className="text-admin-border">/</span>
         <span className="text-white font-mono text-sm">#{order.id.slice(-6).toUpperCase()}</span>
         <OrderStatusBadge status={order.status as OrderStatus} />

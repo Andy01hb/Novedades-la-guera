@@ -37,9 +37,12 @@ export default async function PedidosPage({ searchParams }: Props) {
   const session = await getServerSession(authOptions)
   if (!session) redirect('/admin/login')
 
+  const VALID_STATUSES = Object.values(OrderStatus)
   const statusParam = searchParams.status
-  const statusFilter =
-    statusParam && statusParam !== 'ALL' ? (statusParam as OrderStatus) : undefined
+  const statusFilter: OrderStatus | undefined =
+    statusParam && statusParam !== 'ALL' && VALID_STATUSES.includes(statusParam as OrderStatus)
+      ? (statusParam as OrderStatus)
+      : undefined
 
   let orders: OrderWithItems[] = []
 

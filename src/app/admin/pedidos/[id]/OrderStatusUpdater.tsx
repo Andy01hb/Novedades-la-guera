@@ -22,6 +22,7 @@ export default function OrderStatusUpdater({
   const [status, setStatus] = useState<OrderStatus>(currentStatus)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleSave = async () => {
     setSaving(true)
@@ -36,7 +37,10 @@ export default function OrderStatusUpdater({
 
       if (res.ok) {
         setSaved(true)
+        setError(null)
         router.refresh()
+      } else {
+        setError('Error al guardar. Intenta de nuevo.')
       }
     } finally {
       setSaving(false)
@@ -48,7 +52,7 @@ export default function OrderStatusUpdater({
       <h2 className="text-white font-bold mb-3">Cambiar estado</h2>
       <select
         value={status}
-        onChange={(e) => { setStatus(e.target.value as OrderStatus); setSaved(false) }}
+        onChange={(e) => { setStatus(e.target.value as OrderStatus); setSaved(false); setError(null) }}
         className="w-full px-3 py-2.5 bg-admin-bg border border-admin-border rounded-xl text-white text-sm focus:border-pink outline-none mb-3"
       >
         {STATUS_OPTIONS.map((opt) => (
@@ -65,6 +69,9 @@ export default function OrderStatusUpdater({
       >
         {saving ? 'Guardando...' : saved ? '✓ Guardado' : 'Guardar estado'}
       </button>
+      {error && (
+        <p className="text-red-400 text-xs mt-2 text-center">{error}</p>
+      )}
     </div>
   )
 }
