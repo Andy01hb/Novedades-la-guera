@@ -1,13 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, ShoppingBag, Package } from 'lucide-react'
-
-const NAV_ITEMS = [
-  { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/admin/pedidos', label: 'Pedidos', icon: ShoppingBag },
-  { href: '/admin/productos', label: 'Productos', icon: Package },
-]
+import { NAV_ITEMS } from './nav-items'
 
 export default function AdminBottomNav() {
   const pathname = usePathname()

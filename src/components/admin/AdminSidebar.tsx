@@ -2,13 +2,8 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut } from 'next-auth/react'
-import { LayoutDashboard, ShoppingBag, Package, LogOut, ExternalLink } from 'lucide-react'
-
-const NAV_ITEMS = [
-  { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/admin/pedidos', label: 'Pedidos', icon: ShoppingBag },
-  { href: '/admin/productos', label: 'Productos', icon: Package },
-]
+import { LogOut, ExternalLink } from 'lucide-react'
+import { NAV_ITEMS } from './nav-items'
 
 export default function AdminSidebar() {
   const pathname = usePathname()
