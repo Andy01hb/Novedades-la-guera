@@ -14,7 +14,7 @@ const NAV_LINKS = [
   { href: '/productos?cat=NOVEDADES', label: 'Novedades' },
 ]
 
-export default function Navbar() {
+export default function Navbar({ logoUrl }: { logoUrl?: string | null }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const totalItems = useCart((s) => s.totalItems())
 
@@ -23,7 +23,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 shrink-0">
-          <StoreLogo size={40} />
+          <StoreLogo size={40} src={logoUrl} />
           <div className="hidden sm:block">
             <p className="font-black text-dark text-sm leading-none">Novedades</p>
             <p className="font-black text-pink text-sm leading-none">La Güera</p>

@@ -2,6 +2,10 @@ import Link from 'next/link'
 import { Share2, Globe } from 'lucide-react'
 import StoreLogo from '@/components/ui/StoreLogo'
 
+interface FooterProps {
+  logoUrl?: string | null
+}
+
 const STORE_LINKS = [
   { href: '/', label: 'Inicio' },
   { href: '/productos', label: 'Catálogo' },
@@ -15,7 +19,7 @@ const HELP_LINKS = [
   { href: '/terminos', label: 'Términos de uso' },
 ]
 
-export default function Footer() {
+export default function Footer({ logoUrl }: FooterProps = {}) {
   return (
     <footer className="bg-dark text-white">
       <div className="max-w-7xl mx-auto px-4 py-12">
@@ -23,7 +27,7 @@ export default function Footer() {
           {/* Columna 1: Marca + Newsletter */}
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
-              <StoreLogo size={40} />
+              <StoreLogo size={40} src={logoUrl} />
               <div>
                 <p className="font-black text-sm leading-none">Novedades</p>
                 <p className="font-black text-pink text-sm leading-none">La Güera</p>

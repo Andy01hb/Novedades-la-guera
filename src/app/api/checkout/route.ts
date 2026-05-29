@@ -108,7 +108,8 @@ export async function POST(req: NextRequest) {
       orderId: order.id,
     })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Error al procesar el pedido'
-    return NextResponse.json({ error: message }, { status: 500 })
+    const isStockError = error instanceof Error && error.message.startsWith('Stock insuficiente')
+    const message = isStockError ? (error as Error).message : 'Error al procesar el pedido'
+    return NextResponse.json({ error: message }, { status: isStockError ? 400 : 500 })
   }
 }

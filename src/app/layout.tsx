@@ -3,6 +3,7 @@ import localFont from 'next/font/local'
 import './globals.css'
 import Navbar from '@/components/ui/Navbar'
 import Footer from '@/components/ui/Footer'
+import { getSetting } from '@/lib/settings'
 
 const geistSans = localFont({
   src: './fonts/GeistVF.woff',
@@ -37,19 +38,21 @@ export const viewport: Viewport = {
   maximumScale: 5,
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const logoUrl = await getSetting('logo_url')
+
   return (
     <html lang="es">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-cream text-dark`}
       >
-        <Navbar />
+        <Navbar logoUrl={logoUrl} />
         <main>{children}</main>
-        <Footer />
+        <Footer logoUrl={logoUrl} />
       </body>
     </html>
   )

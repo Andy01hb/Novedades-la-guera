@@ -1,6 +1,9 @@
 import Link from 'next/link'
+import Image from 'next/image'
+import { getSetting } from '@/lib/settings'
 
-export default function Hero() {
+export default async function Hero() {
+  const mascotUrl = await getSetting('hero_mascot_url')
   return (
     <section className="relative overflow-hidden bg-cream py-10 lg:py-20">
       {/* Blobs decorativos */}
@@ -48,8 +51,19 @@ export default function Hero() {
 
         {/* Mascota placeholder + badges flotantes */}
         <div className="relative flex-1 flex items-center justify-center">
-          <div className="w-64 h-64 lg:w-80 lg:h-80 bg-gradient-to-br from-pink/20 to-yellow/20 rounded-full flex items-center justify-center">
-            <span className="text-8xl">👱‍♀️</span>
+          <div className="w-64 h-64 lg:w-80 lg:h-80 bg-gradient-to-br from-pink/20 to-yellow/20 rounded-full flex items-center justify-center overflow-hidden">
+            {mascotUrl ? (
+              <Image
+                src={mascotUrl}
+                alt="Mascota La Güera"
+                width={320}
+                height={320}
+                className="object-contain w-full h-full"
+                unoptimized
+              />
+            ) : (
+              <span className="text-8xl">👱‍♀️</span>
+            )}
           </div>
           {/* Badges flotantes */}
           <div className="absolute top-4 right-8 bg-white rounded-2xl shadow-pink px-3 py-2 text-xs font-bold text-dark">

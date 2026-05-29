@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Category, ProductBadge } from '@prisma/client'
 import Link from 'next/link'
+import ProductImageUploader from './ProductImageUploader'
 
 const schema = z.object({
   name: z.string().min(2, 'Mínimo 2 caracteres'),
@@ -43,7 +44,7 @@ export default function ProductForm({ defaultValues, productId }: Props) {
   const router = useRouter()
   const [submitError, setSubmitError] = useState<string | null>(null)
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
+  const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       active: true,
@@ -125,9 +126,12 @@ export default function ProductForm({ defaultValues, productId }: Props) {
         </div>
 
         <div className="col-span-2">
-          <label className={labelClass}>URL de imagen (Cloudinary)</label>
-          <input {...register('imageUrl')} className={inputClass} placeholder="https://res.cloudinary.com/..." />
-          {errors.imageUrl && <p className="text-red-400 text-xs mt-1">{errors.imageUrl.message}</p>}
+          <label className={labelClass}>Imagen del producto</label>
+          <ProductImageUploader
+            value={watch('imageUrl') ?? null}
+            onChange={(url) => setValue('imageUrl', url, { shouldValidate: true })}
+          />
+          {errors.imageUrl && <p className="text-red-400 text-xs mt-1">La imagen es requerida</p>}
         </div>
 
         <div>

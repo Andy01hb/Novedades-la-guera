@@ -35,12 +35,20 @@ export default async function ProductosAdminPage() {
             {activeCount} activos · {products.length} total
           </p>
         </div>
-        <Link
-          href="/admin/productos/nuevo"
-          className="bg-pink text-white font-bold px-5 py-2.5 rounded-xl text-sm hover:bg-pink/90 transition-colors"
-        >
-          + Nuevo producto
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/admin/productos/importar"
+            className="border border-admin-border text-admin-muted hover:text-white hover:border-white/20 font-medium px-5 py-2.5 rounded-xl text-sm transition-colors"
+          >
+            Importar Excel
+          </Link>
+          <Link
+            href="/admin/productos/nuevo"
+            className="bg-pink text-white font-bold px-5 py-2.5 rounded-xl text-sm hover:bg-pink/90 transition-colors"
+          >
+            + Nuevo producto
+          </Link>
+        </div>
       </div>
 
       {products.length === 0 ? (

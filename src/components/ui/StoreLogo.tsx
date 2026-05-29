@@ -4,10 +4,12 @@ import { useState } from 'react'
 
 interface Props {
   size?: number
+  src?: string | null
 }
 
-export default function StoreLogo({ size = 40 }: Props) {
+export default function StoreLogo({ size = 40, src }: Props) {
   const [error, setError] = useState(false)
+  const imgSrc = src || '/logo.png'
 
   if (error) {
     return (
@@ -23,10 +25,11 @@ export default function StoreLogo({ size = 40 }: Props) {
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
       <Image
-        src="/logo.png"
+        src={imgSrc}
         alt="Novedades La Güera"
         fill
         className="object-contain"
+        unoptimized={imgSrc.startsWith('https://')}
         onError={() => setError(true)}
       />
     </div>

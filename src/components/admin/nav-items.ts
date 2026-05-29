@@ -1,4 +1,4 @@
-import { LayoutDashboard, ShoppingBag, Package } from 'lucide-react'
+import { LayoutDashboard, ShoppingBag, Package, Settings } from 'lucide-react'
 import { ElementType } from 'react'
 
 export interface NavItem {
@@ -11,4 +11,5 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/pedidos', label: 'Pedidos', icon: ShoppingBag },
   { href: '/admin/productos', label: 'Productos', icon: Package },
+  { href: '/admin/configuracion', label: 'Configuración', icon: Settings },
 ]
