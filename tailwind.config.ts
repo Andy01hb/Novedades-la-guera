@@ -27,7 +27,7 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ['var(--font-system)', 'system-ui', 'Segoe UI', 'sans-serif'],
+        sans: ['var(--font-geist-sans)', 'system-ui', 'Segoe UI', 'sans-serif'],
       },
       boxShadow: {
         pink: '0 4px 20px rgba(233, 30, 140, 0.25)',
