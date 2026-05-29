@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --pink: #E91E8C;
+  --pink-lt: #FF6BB3;
+  --yellow: #FFCA28;
+  --dark: #1a1a2e;
+  --cream: #FFF5FA;
+}
+
+body {
+  background-color: var(--cream);
+  color: var(--dark);
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-gradient-to-r from-pink to-pink-light text-white font-bold py-3 px-6 rounded-full shadow-pink hover:shadow-pink-lg transition-all duration-200 active:scale-95;
+  }
+  .btn-ghost {
+    @apply border-2 border-pink text-pink font-bold py-3 px-6 rounded-full hover:bg-pink hover:text-white transition-all duration-200;
+  }
+  .card-product {
+    @apply bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-pink transition-shadow duration-200;
+  }
+}
