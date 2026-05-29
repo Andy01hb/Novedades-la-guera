@@ -20,10 +20,21 @@ export const metadata: Metadata = {
   title: 'Novedades La Güera — Belleza, Accesorios y Más',
   description: '¡Todo lo que necesitas, al mejor precio! Tienda online con envío a Juárez y toda la república.',
   manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'La Güera',
+  },
+  formatDetection: {
+    telephone: false,
+  },
 }
 
 export const viewport: Viewport = {
   themeColor: '#E91E8C',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
 }
 
 export default function RootLayout({
