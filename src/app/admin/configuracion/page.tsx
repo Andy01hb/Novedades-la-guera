@@ -3,6 +3,7 @@ import { authOptions } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { getSetting } from '@/lib/settings'
 import ImageUploader from '@/components/admin/ImageUploader'
+import StripeConfigForm from '@/components/admin/StripeConfigForm'
 
 const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET ?? ''
 
@@ -51,6 +52,16 @@ export default async function ConfiguracionPage() {
             uploadPreset={UPLOAD_PRESET}
           />
         </div>
+      </div>
+
+      <div className="bg-admin-card rounded-3xl p-6 border border-admin-border mt-6">
+        <div className="mb-5">
+          <p className="text-white font-semibold text-sm">Configuración de Stripe</p>
+          <p className="text-admin-muted text-xs mt-0.5">
+            Claves de pago cifradas con AES-256-GCM antes de guardarse en la base de datos
+          </p>
+        </div>
+        <StripeConfigForm />
       </div>
     </div>
   )

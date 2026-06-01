@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { stripe } from '@/lib/stripe'
+import { getStripeClient, getStripeWebhookSecret } from '@/lib/stripe'
 import { prisma } from '@/lib/prisma'
 import Stripe from 'stripe'
 
@@ -13,7 +13,9 @@ export async function POST(req: NextRequest) {
 
   let event: Stripe.Event
   try {
-    event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET!)
+    const stripe = await getStripeClient()
+    const webhookSecret = await getStripeWebhookSecret()
+    event = stripe.webhooks.constructEvent(body, sig, webhookSecret)
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Webhook error'
     return NextResponse.json({ error: `Webhook signature invalid: ${message}` }, { status: 400 })
