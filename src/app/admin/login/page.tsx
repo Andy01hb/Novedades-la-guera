@@ -1,17 +1,10 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { signIn, useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { signIn } from 'next-auth/react'
 import StoreLogo from '@/components/ui/StoreLogo'
 
 export default function AdminLoginPage() {
-  const router = useRouter()
-  const { status } = useSession()
   const [email, setEmail] = useState('')
-
-  useEffect(() => {
-    if (status === 'authenticated') router.replace('/admin/dashboard')
-  }, [status, router])
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -20,7 +13,6 @@ export default function AdminLoginPage() {
     e.preventDefault()
     setLoading(true)
     setError(null)
-
     try {
       const result = await signIn('credentials', {
         email,
@@ -31,7 +23,7 @@ export default function AdminLoginPage() {
       if (result?.error) {
         setError('Correo o contraseña incorrectos')
       } else {
-        router.push('/admin/dashboard')
+        window.location.href = '/admin/dashboard'
       }
     } finally {
       setLoading(false)
