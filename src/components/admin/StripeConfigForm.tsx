@@ -110,21 +110,81 @@ export default function StripeConfigForm() {
       )}
 
       {/* Guía paso a paso */}
-      <div className="bg-admin-bg rounded-2xl p-4 border border-admin-border space-y-1">
-        <p className="text-white text-sm font-bold mb-3">¿Cómo obtener las claves?</p>
-        <p className="text-admin-muted text-xs mb-3 leading-relaxed">
-          Entra a tu cuenta de Stripe y busca la sección de <strong className="text-white">Developers → API keys</strong>.
-          Ahí encontrarás las dos primeras claves.
-        </p>
-        <a
-          href="https://dashboard.stripe.com/apikeys"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1.5 text-pink text-xs hover:underline w-fit"
-        >
-          <ExternalLink size={12} />
-          Abrir API keys en Stripe
-        </a>
+      <div className="bg-admin-bg rounded-2xl p-4 border border-admin-border space-y-4">
+        <p className="text-white text-sm font-bold">¿Cómo obtener las claves?</p>
+
+        {/* Paso A: API Keys */}
+        <div className="space-y-1.5">
+          <p className="text-white text-xs font-semibold">Claves pública y secreta</p>
+          <p className="text-admin-muted text-xs leading-relaxed">
+            Entra a tu cuenta de Stripe y ve a <strong className="text-white">Developers → API keys</strong>.
+            Ahí encontrarás la clave pública (<code className="bg-white/10 px-1 rounded">pk_...</code>) y la clave secreta (<code className="bg-white/10 px-1 rounded">sk_...</code>).
+          </p>
+          <a
+            href="https://dashboard.stripe.com/apikeys"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-pink text-xs hover:underline w-fit"
+          >
+            <ExternalLink size={12} />
+            Abrir API keys en Stripe
+          </a>
+        </div>
+
+        <div className="border-t border-admin-border" />
+
+        {/* Paso B: Webhook */}
+        <div className="space-y-1.5">
+          <p className="text-white text-xs font-semibold">Clave de notificaciones de pago</p>
+          <p className="text-admin-muted text-xs leading-relaxed">
+            Ve a <strong className="text-white">Developers → Webhooks</strong> y crea un nuevo endpoint con estos pasos:
+          </p>
+          <ol className="space-y-2 pl-1">
+            <li className="flex gap-2 text-admin-muted text-xs leading-relaxed">
+              <span className="text-pink font-bold shrink-0">1.</span>
+              <span>Haz clic en <strong className="text-white">Add destination</strong></span>
+            </li>
+            <li className="flex gap-2 text-admin-muted text-xs leading-relaxed">
+              <span className="text-pink font-bold shrink-0">2.</span>
+              <span>Selecciona <strong className="text-white">Your account</strong> como alcance y haz clic en Continue</span>
+            </li>
+            <li className="flex gap-2 text-admin-muted text-xs leading-relaxed">
+              <span className="text-pink font-bold shrink-0">3.</span>
+              <span>En la pestaña <strong className="text-white">Selected events</strong> busca y selecciona únicamente: <code className="bg-white/10 px-1 rounded text-pink">payment_intent.succeeded</code> → Continue</span>
+            </li>
+            <li className="flex gap-2 text-admin-muted text-xs leading-relaxed">
+              <span className="text-pink font-bold shrink-0">4.</span>
+              <span>Elige <strong className="text-white">Webhook endpoint</strong> como tipo de destino → Continue</span>
+            </li>
+            <li className="flex gap-2 text-admin-muted text-xs leading-relaxed">
+              <span className="text-pink font-bold shrink-0">5.</span>
+              <span>
+                En <strong className="text-white">Destination name</strong> escribe cualquier nombre (ej: Mi tienda).
+                En <strong className="text-white">Endpoint URL</strong> pega exactamente esta dirección:
+                <code className="block bg-white/10 px-2 py-1 rounded mt-1 break-all select-all">
+                  {typeof window !== 'undefined' ? window.location.origin : 'https://tu-tienda.vercel.app'}/api/webhooks/stripe
+                </code>
+              </span>
+            </li>
+            <li className="flex gap-2 text-admin-muted text-xs leading-relaxed">
+              <span className="text-pink font-bold shrink-0">6.</span>
+              <span>Haz clic en <strong className="text-white">Create destination</strong></span>
+            </li>
+            <li className="flex gap-2 text-admin-muted text-xs leading-relaxed">
+              <span className="text-pink font-bold shrink-0">7.</span>
+              <span>En la pantalla siguiente verás el <strong className="text-white">Signing secret</strong> — cópialo y pégalo en el campo de abajo. Empieza con <code className="bg-white/10 px-1 rounded">whsec_</code></span>
+            </li>
+          </ol>
+          <a
+            href="https://dashboard.stripe.com/webhooks"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-pink text-xs hover:underline w-fit mt-1"
+          >
+            <ExternalLink size={12} />
+            Abrir Webhooks en Stripe
+          </a>
+        </div>
       </div>
 
       {/* Formulario */}
