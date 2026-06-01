@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { CheckCircle2, AlertCircle, Eye, EyeOff, Trash2 } from 'lucide-react'
+import { CheckCircle2, AlertCircle, Eye, EyeOff, Trash2, ExternalLink } from 'lucide-react'
 
 interface StripeStatus {
   configured: boolean
@@ -10,7 +10,22 @@ interface StripeStatus {
 }
 
 const inputClass = 'w-full px-3 py-2.5 bg-admin-bg border border-admin-border rounded-xl text-white text-sm focus:border-pink outline-none transition-colors font-mono'
-const labelClass = 'text-admin-muted text-sm font-medium block mb-1.5'
+const labelClass = 'text-white text-sm font-semibold block mb-1'
+const hintClass = 'text-admin-muted text-xs mt-1 leading-relaxed'
+
+function FieldHelp({ step, title, hint }: { step: number; title: string; hint: string }) {
+  return (
+    <div className="flex gap-3 mb-3">
+      <div className="w-6 h-6 rounded-full bg-pink/20 text-pink text-xs font-black flex items-center justify-center shrink-0 mt-0.5">
+        {step}
+      </div>
+      <div>
+        <p className={labelClass}>{title}</p>
+        <p className={hintClass}>{hint}</p>
+      </div>
+    </div>
+  )
+}
 
 export default function StripeConfigForm() {
   const [status, setStatus] = useState<StripeStatus | null>(null)
@@ -24,9 +39,7 @@ export default function StripeConfigForm() {
   const [success, setSuccess] = useState(false)
 
   useEffect(() => {
-    fetch('/api/admin/stripe')
-      .then((r) => r.json())
-      .then(setStatus)
+    fetch('/api/admin/stripe').then((r) => r.json()).then(setStatus)
   }, [])
 
   const handleSave = async (e: React.FormEvent) => {
@@ -45,7 +58,7 @@ export default function StripeConfigForm() {
     setSaving(false)
 
     if (!res.ok) {
-      setError(data.error ?? 'Error al guardar')
+      setError(data.error ?? 'Ocurrió un error. Verifica que las claves sean correctas.')
       return
     }
 
@@ -55,78 +68,111 @@ export default function StripeConfigForm() {
     setWebhookSecret('')
     const updated = await fetch('/api/admin/stripe').then((r) => r.json())
     setStatus(updated)
-    setTimeout(() => setSuccess(false), 4000)
+    setTimeout(() => setSuccess(false), 5000)
   }
 
   const handleDelete = async () => {
-    if (!confirm('¿Eliminar la configuración de Stripe? Los pagos dejarán de funcionar.')) return
+    if (!confirm('¿Desactivar los pagos? La tienda dejará de poder cobrar hasta que vuelvas a configurar las claves.')) return
     await fetch('/api/admin/stripe', { method: 'DELETE' })
     setStatus({ configured: false, publicKeyHint: null, secretKeyConfigured: false, webhookConfigured: false })
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
+
+      {/* Estado actual */}
       {status && (
-        <div className={`flex items-center gap-3 p-3 rounded-2xl border ${
+        <div className={`flex items-start gap-3 p-4 rounded-2xl border ${
           status.configured
             ? 'bg-green-900/20 border-green-500/30'
             : 'bg-yellow-900/20 border-yellow-500/30'
         }`}>
           {status.configured
-            ? <CheckCircle2 size={16} className="text-green-400 shrink-0" />
-            : <AlertCircle size={16} className="text-yellow-400 shrink-0" />
+            ? <CheckCircle2 size={16} className="text-green-400 shrink-0 mt-0.5" />
+            : <AlertCircle size={16} className="text-yellow-400 shrink-0 mt-0.5" />
           }
           <div className="flex-1">
-            <p className={`text-sm font-medium ${status.configured ? 'text-green-400' : 'text-yellow-400'}`}>
-              {status.configured ? 'Stripe configurado' : 'Stripe sin configurar — los pagos están desactivados'}
+            <p className={`text-sm font-semibold ${status.configured ? 'text-green-400' : 'text-yellow-400'}`}>
+              {status.configured ? '✅ Pagos activados' : '⚠️ Pagos desactivados'}
             </p>
-            {status.publicKeyHint && (
-              <p className="text-xs text-admin-muted mt-0.5 font-mono">{status.publicKeyHint}</p>
-            )}
+            <p className="text-admin-muted text-xs mt-0.5">
+              {status.configured
+                ? `Tu tienda está recibiendo pagos. Clave activa: ${status.publicKeyHint}`
+                : 'Configura tus claves de Stripe para empezar a cobrar.'}
+            </p>
           </div>
           {status.configured && (
-            <button onClick={handleDelete} className="text-admin-muted hover:text-red-400 transition-colors">
+            <button onClick={handleDelete} title="Desactivar pagos" className="text-admin-muted hover:text-red-400 transition-colors shrink-0">
               <Trash2 size={15} />
             </button>
           )}
         </div>
       )}
 
-      <form onSubmit={handleSave} className="space-y-4">
+      {/* Guía paso a paso */}
+      <div className="bg-admin-bg rounded-2xl p-4 border border-admin-border space-y-1">
+        <p className="text-white text-sm font-bold mb-3">¿Cómo obtener las claves?</p>
+        <p className="text-admin-muted text-xs mb-3 leading-relaxed">
+          Entra a tu cuenta de Stripe y busca la sección de <strong className="text-white">Developers → API keys</strong>.
+          Ahí encontrarás las dos primeras claves.
+        </p>
+        <a
+          href="https://dashboard.stripe.com/apikeys"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 text-pink text-xs hover:underline w-fit"
+        >
+          <ExternalLink size={12} />
+          Abrir API keys en Stripe
+        </a>
+      </div>
+
+      {/* Formulario */}
+      <form onSubmit={handleSave} className="space-y-5">
+
         <div>
-          <label className={labelClass}>Publishable Key</label>
+          <FieldHelp
+            step={1}
+            title="Clave pública"
+            hint='Es la clave que empieza con "pk_". Se usa para mostrar el formulario de pago a tus clientes. No es secreta.'
+          />
           <input
             value={publicKey}
             onChange={(e) => setPublicKey(e.target.value)}
             className={inputClass}
-            placeholder="pk_live_..."
+            placeholder="pk_live_... o pk_test_..."
             required
           />
         </div>
 
         <div>
-          <label className={labelClass}>Secret Key</label>
+          <FieldHelp
+            step={2}
+            title="Clave secreta"
+            hint='Es la clave que empieza con "sk_". Se usa para procesar los cobros. ¡Nunca la compartas con nadie!'
+          />
           <div className="relative">
             <input
               type={showSecret ? 'text' : 'password'}
               value={secretKey}
               onChange={(e) => setSecretKey(e.target.value)}
               className={`${inputClass} pr-10`}
-              placeholder="sk_live_..."
+              placeholder="sk_live_... o sk_test_..."
               required
             />
-            <button
-              type="button"
-              onClick={() => setShowSecret(!showSecret)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-admin-muted hover:text-white transition-colors"
-            >
+            <button type="button" onClick={() => setShowSecret(!showSecret)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-admin-muted hover:text-white transition-colors">
               {showSecret ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
           </div>
         </div>
 
         <div>
-          <label className={labelClass}>Webhook Secret</label>
+          <FieldHelp
+            step={3}
+            title="Clave de notificaciones de pago (Webhook)"
+            hint='Permite que Stripe avise a tu tienda cuando alguien paga. Sin esto, los pedidos no se actualizan automáticamente. La encuentras en Stripe → Developers → Webhooks.'
+          />
           <div className="relative">
             <input
               type={showWebhook ? 'text' : 'password'}
@@ -136,39 +182,42 @@ export default function StripeConfigForm() {
               placeholder="whsec_..."
               required
             />
-            <button
-              type="button"
-              onClick={() => setShowWebhook(!showWebhook)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-admin-muted hover:text-white transition-colors"
-            >
+            <button type="button" onClick={() => setShowWebhook(!showWebhook)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-admin-muted hover:text-white transition-colors">
               {showWebhook ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
           </div>
-          <p className="text-admin-muted text-xs mt-1">
-            Obtenlo en Stripe Dashboard → Developers → Webhooks → tu endpoint
-          </p>
+          <a
+            href="https://dashboard.stripe.com/webhooks"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-pink text-xs hover:underline w-fit mt-2"
+          >
+            <ExternalLink size={12} />
+            Abrir Webhooks en Stripe
+          </a>
         </div>
 
         {error && (
-          <div className="flex items-center gap-2 p-3 bg-red-900/20 border border-red-500/30 rounded-xl">
-            <AlertCircle size={14} className="text-red-400 shrink-0" />
-            <p className="text-red-400 text-xs">{error}</p>
+          <div className="flex items-start gap-2 p-3 bg-red-900/20 border border-red-500/30 rounded-xl">
+            <AlertCircle size={14} className="text-red-400 shrink-0 mt-0.5" />
+            <p className="text-red-400 text-xs leading-relaxed">{error}</p>
           </div>
         )}
 
         {success && (
           <div className="flex items-center gap-2 p-3 bg-green-900/20 border border-green-500/30 rounded-xl">
             <CheckCircle2 size={14} className="text-green-400 shrink-0" />
-            <p className="text-green-400 text-xs">Claves verificadas y guardadas correctamente</p>
+            <p className="text-green-400 text-xs">¡Listo! Tu tienda ya puede recibir pagos.</p>
           </div>
         )}
 
         <button
           type="submit"
           disabled={saving}
-          className="flex items-center gap-2 px-5 py-2.5 bg-pink text-white font-bold text-sm rounded-xl hover:bg-pink/90 transition-colors disabled:opacity-50"
+          className="w-full bg-pink text-white font-bold py-3 rounded-xl hover:bg-pink/90 transition-colors disabled:opacity-50 text-sm"
         >
-          {saving ? 'Verificando con Stripe...' : 'Verificar y guardar'}
+          {saving ? 'Verificando que las claves sean correctas...' : 'Activar pagos'}
         </button>
       </form>
     </div>
