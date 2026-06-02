@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { Plus, Trash2, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Plus, Trash2, AlertCircle, Loader2, Save, CheckCircle2 } from 'lucide-react'
+import AddressPicker from '@/components/ui/AddressPicker'
 
 interface Tier {
   id?: string
@@ -27,11 +28,36 @@ function parseMXN(val: string): number | null {
   return isNaN(n) ? null : Math.round(n * 100)
 }
 
+function tierKey(t: Tier) {
+  const { id: _id, ...rest } = t
+  return JSON.stringify(rest)
+}
+
+function StatusBadge({ dirty, isNew }: { dirty: boolean; isNew?: boolean }) {
+  if (isNew) return (
+    <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 font-medium">
+      ● nuevo
+    </span>
+  )
+  if (dirty) return (
+    <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 font-medium">
+      ● editando
+    </span>
+  )
+  return (
+    <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/30 text-green-400 font-medium">
+      <CheckCircle2 size={10} /> guardado
+    </span>
+  )
+}
+
 export default function ShippingConfig() {
   const [storeAddress, setStoreAddress] = useState('')
   const [tiers, setTiers] = useState<Tier[]>([])
+  const [savedAddress, setSavedAddress] = useState('')
+  const [savedTiers, setSavedTiers] = useState<Tier[]>([])
   const [saving, setSaving] = useState(false)
-  const [success, setSuccess] = useState(false)
+  const [saveSuccess, setSaveSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [testAddress, setTestAddress] = useState('')
   const [testResult, setTestResult] = useState<{ cost: number; label: string; km: number } | null>(null)
@@ -39,13 +65,22 @@ export default function ShippingConfig() {
 
   useEffect(() => {
     fetch('/api/admin/shipping').then(r => r.json()).then(data => {
-      setStoreAddress(data.storeAddress ?? '')
-      setTiers((data.tiers ?? []).map((t: Tier) => ({
+      const addr = data.storeAddress ?? ''
+      const loaded: Tier[] = (data.tiers ?? []).map((t: Tier) => ({
         ...t,
         pricingMode: t.fixedPrice !== null ? 'fixed' : 'perKm',
-      })))
+      }))
+      setStoreAddress(addr)
+      setTiers(loaded)
+      setSavedAddress(addr)
+      setSavedTiers(loaded)
     })
   }, [])
+
+  const isAddressDirty = storeAddress !== savedAddress
+  const isTierDirty = (i: number) => i < savedTiers.length && tierKey(tiers[i]) !== tierKey(savedTiers[i])
+  const isTierNew = (i: number) => i >= savedTiers.length
+  const isDirty = isAddressDirty || tiers.length !== savedTiers.length || tiers.some((_, i) => isTierDirty(i))
 
   const addTier = () => {
     setTiers([...tiers, {
@@ -62,7 +97,7 @@ export default function ShippingConfig() {
   const removeTier = (i: number) => setTiers(tiers.filter((_, idx) => idx !== i))
 
   const handleSave = async () => {
-    setSaving(true); setError(null); setSuccess(false)
+    setSaving(true); setError(null); setSaveSuccess(false)
     const payload = {
       storeAddress,
       tiers: tiers.map((t, i) => ({
@@ -78,8 +113,14 @@ export default function ShippingConfig() {
       body: JSON.stringify(payload),
     })
     setSaving(false)
-    if (res.ok) { setSuccess(true); setTimeout(() => setSuccess(false), 3000) }
-    else setError('Error al guardar')
+    if (res.ok) {
+      setSavedAddress(storeAddress)
+      setSavedTiers(tiers.map(t => ({ ...t })))
+      setSaveSuccess(true)
+      setTimeout(() => setSaveSuccess(false), 3000)
+    } else {
+      setError('Error al guardar')
+    }
   }
 
   const handleTest = async () => {
@@ -96,14 +137,16 @@ export default function ShippingConfig() {
     <div className="space-y-6">
       {/* Dirección de la tienda */}
       <div>
-        <label className={labelClass}>Dirección de la tienda (punto de origen)</label>
-        <input
+        <div className="flex items-center justify-between mb-1.5">
+          <label className={labelClass} style={{ marginBottom: 0 }}>Dirección de la tienda (punto de origen)</label>
+          <StatusBadge dirty={isAddressDirty} />
+        </div>
+        <AddressPicker
           value={storeAddress}
-          onChange={e => setStoreAddress(e.target.value)}
-          className={inputClass}
+          onChange={setStoreAddress}
           placeholder="Av. Juárez 123, Centro, Ciudad Juárez, Chihuahua"
+          theme="dark"
         />
-        <p className="text-admin-muted text-xs mt-1">Escribe la dirección completa para que Google Maps pueda localizarla</p>
       </div>
 
       {/* Rangos */}
@@ -122,27 +165,40 @@ export default function ShippingConfig() {
         )}
 
         {tiers.map((tier, i) => (
-          <div key={i} className="bg-admin-bg border border-admin-border rounded-2xl p-4 space-y-3">
+          <div key={i} className={`bg-admin-bg border rounded-2xl p-4 space-y-3 transition-colors ${
+            isTierNew(i)
+              ? 'border-blue-500/40 border-l-2 border-l-blue-500'
+              : isTierDirty(i)
+              ? 'border-yellow-500/40 border-l-2 border-l-yellow-500'
+              : 'border-admin-border'
+          }`}>
             <div className="flex items-center justify-between">
               <input
                 value={tier.label}
                 onChange={e => updateTier(i, { label: e.target.value })}
-                className="bg-transparent text-white font-semibold text-sm outline-none border-b border-transparent focus:border-pink pb-0.5 w-48"
+                className="bg-transparent text-white font-semibold text-sm outline-none border-b border-transparent focus:border-pink pb-0.5 w-40"
                 placeholder="Nombre del rango"
               />
-              <button onClick={() => removeTier(i)} className="text-admin-muted hover:text-red-400 transition-colors">
-                <Trash2 size={14} />
-              </button>
+              <div className="flex items-center gap-2">
+                <StatusBadge dirty={isTierDirty(i)} isNew={isTierNew(i)} />
+                <button onClick={() => removeTier(i)} className="text-admin-muted hover:text-red-400 transition-colors">
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={labelClass}>Desde (km)</label>
-                <input type="number" value={tier.minKm} onChange={e => updateTier(i, { minKm: parseFloat(e.target.value) || 0 })} className={inputClass} min={0} />
+                <input type="number" value={tier.minKm}
+                  onChange={e => updateTier(i, { minKm: parseFloat(e.target.value) || 0 })}
+                  className={inputClass} min={0} />
               </div>
               <div>
                 <label className={labelClass}>Hasta (km, vacío = sin límite)</label>
-                <input type="number" value={tier.maxKm ?? ''} onChange={e => updateTier(i, { maxKm: e.target.value ? parseFloat(e.target.value) : null })} className={inputClass} min={0} placeholder="∞" />
+                <input type="number" value={tier.maxKm ?? ''}
+                  onChange={e => updateTier(i, { maxKm: e.target.value ? parseFloat(e.target.value) : null })}
+                  className={inputClass} min={0} placeholder="∞" />
               </div>
             </div>
 
@@ -161,17 +217,23 @@ export default function ShippingConfig() {
             {tier.pricingMode === 'fixed' ? (
               <div>
                 <label className={labelClass}>Costo fijo (pesos MXN, 0 = gratis)</label>
-                <input type="number" value={formatMXN(tier.fixedPrice)} onChange={e => updateTier(i, { fixedPrice: parseMXN(e.target.value) })} className={inputClass} min={0} placeholder="80" />
+                <input type="number" value={formatMXN(tier.fixedPrice)}
+                  onChange={e => updateTier(i, { fixedPrice: parseMXN(e.target.value) })}
+                  className={inputClass} min={0} placeholder="80" />
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={labelClass}>Costo base (pesos MXN)</label>
-                  <input type="number" value={formatMXN(tier.basePrice)} onChange={e => updateTier(i, { basePrice: parseMXN(e.target.value) })} className={inputClass} min={0} placeholder="50" />
+                  <input type="number" value={formatMXN(tier.basePrice)}
+                    onChange={e => updateTier(i, { basePrice: parseMXN(e.target.value) })}
+                    className={inputClass} min={0} placeholder="50" />
                 </div>
                 <div>
                   <label className={labelClass}>+ por km (pesos MXN)</label>
-                  <input type="number" value={formatMXN(tier.pricePerKm)} onChange={e => updateTier(i, { pricePerKm: parseMXN(e.target.value) })} className={inputClass} min={0} placeholder="2" />
+                  <input type="number" value={formatMXN(tier.pricePerKm)}
+                    onChange={e => updateTier(i, { pricePerKm: parseMXN(e.target.value) })}
+                    className={inputClass} min={0} placeholder="2" />
                 </div>
               </div>
             )}
@@ -183,9 +245,11 @@ export default function ShippingConfig() {
       <div className="bg-admin-bg border border-admin-border rounded-2xl p-4 space-y-3">
         <p className="text-white text-sm font-semibold">Probar calculadora</p>
         <div className="flex gap-2">
-          <input value={testAddress} onChange={e => setTestAddress(e.target.value)} className={`${inputClass} flex-1`} placeholder="Dirección del cliente de prueba" />
-          <button onClick={handleTest} disabled={testing || !testAddress} className="px-4 py-2 bg-pink/10 text-pink text-sm font-medium rounded-xl hover:bg-pink/20 transition-colors disabled:opacity-40">
-            {testing ? '...' : 'Calcular'}
+          <input value={testAddress} onChange={e => setTestAddress(e.target.value)}
+            className={`${inputClass} flex-1`} placeholder="Dirección del cliente de prueba" />
+          <button onClick={handleTest} disabled={testing || !testAddress}
+            className="px-4 py-2 bg-pink/10 text-pink text-sm font-medium rounded-xl hover:bg-pink/20 transition-colors disabled:opacity-40">
+            {testing ? <Loader2 size={14} className="animate-spin" /> : 'Calcular'}
           </button>
         </div>
         {testResult && (
@@ -202,8 +266,27 @@ export default function ShippingConfig() {
         </div>
       )}
 
-      <button onClick={handleSave} disabled={saving} className="w-full bg-pink text-white font-bold py-3 rounded-2xl hover:bg-pink/90 transition-colors disabled:opacity-50 text-sm flex items-center justify-center gap-2">
-        {success ? <><CheckCircle2 size={16} /> Guardado</> : saving ? 'Guardando...' : 'Guardar configuración de envíos'}
+      {/* Save button */}
+      <button
+        onClick={handleSave}
+        disabled={saving || !isDirty}
+        className={`w-full font-bold py-3 rounded-2xl transition-all text-sm flex items-center justify-center gap-2 ${
+          saveSuccess
+            ? 'bg-green-500 text-white'
+            : isDirty
+            ? 'bg-pink text-white hover:bg-pink/90'
+            : 'bg-admin-card text-admin-muted cursor-not-allowed border border-admin-border'
+        } disabled:opacity-70`}
+      >
+        {saving ? (
+          <><Loader2 size={15} className="animate-spin" /> Guardando...</>
+        ) : saveSuccess ? (
+          <><CheckCircle2 size={15} /> Guardado</>
+        ) : isDirty ? (
+          <><Save size={15} /> Guardar configuración</>
+        ) : (
+          <><CheckCircle2 size={15} /> Sin cambios pendientes</>
+        )}
       </button>
     </div>
   )

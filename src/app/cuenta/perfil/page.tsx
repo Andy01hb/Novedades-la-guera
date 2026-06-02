@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
 import { CheckCircle2, Package, LogOut } from 'lucide-react'
+import AddressPicker, { type AddressDetails } from '@/components/ui/AddressPicker'
 
 interface Profile {
   name: string; email: string; phone: string | null
@@ -13,6 +14,11 @@ interface Profile {
 
 const inputClass = 'w-full px-4 py-3 border border-gray-200 rounded-2xl text-dark text-sm focus:border-pink focus:outline-none transition-colors'
 const labelClass = 'text-dark/60 text-xs font-medium block mb-1'
+
+function profileToAddress(p: Profile): string {
+  const parts = [p.street, p.colonia, p.city, p.state].filter(Boolean)
+  return parts.join(', ')
+}
 
 export default function PerfilPage() {
   const { data: session, status } = useSession()
@@ -31,6 +37,18 @@ export default function PerfilPage() {
       fetch('/api/customer/profile').then(r => r.json()).then(setProfile)
     }
   }, [session])
+
+  const handleAddressDetails = (details: AddressDetails) => {
+    if (!profile) return
+    setProfile({
+      ...profile,
+      street: details.street ?? profile.street,
+      colonia: details.colonia ?? profile.colonia,
+      postalCode: details.postalCode ?? profile.postalCode,
+      city: details.city ?? profile.city,
+      state: details.state ?? profile.state,
+    })
+  }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -70,50 +88,86 @@ export default function PerfilPage() {
       </div>
 
       <form onSubmit={handleSave} className="space-y-6">
+        {/* Datos personales */}
         <div className="bg-white rounded-3xl p-6 shadow-sm space-y-4">
           <p className="text-dark font-bold text-sm">Datos personales</p>
           <div>
             <label className={labelClass}>Nombre completo</label>
-            <input value={profile.name} onChange={e => setProfile({...profile, name: e.target.value})} className={inputClass} required />
+            <input value={profile.name}
+              onChange={e => setProfile({ ...profile, name: e.target.value })}
+              className={inputClass} required />
           </div>
           <div>
             <label className={labelClass}>Teléfono</label>
-            <input value={profile.phone ?? ''} onChange={e => setProfile({...profile, phone: e.target.value})} className={inputClass} placeholder="10 dígitos" />
+            <input value={profile.phone ?? ''}
+              onChange={e => setProfile({ ...profile, phone: e.target.value })}
+              className={inputClass} placeholder="10 dígitos" />
           </div>
         </div>
 
+        {/* Dirección de entrega */}
         <div className="bg-white rounded-3xl p-6 shadow-sm space-y-4">
-          <p className="text-dark font-bold text-sm">Dirección de entrega</p>
-          <p className="text-dark/50 text-xs">Se usará para pre-llenar el formulario al hacer un pedido</p>
           <div>
-            <label className={labelClass}>Calle y número</label>
-            <input value={profile.street ?? ''} onChange={e => setProfile({...profile, street: e.target.value})} className={inputClass} placeholder="Av. Juárez 123" />
+            <p className="text-dark font-bold text-sm">Dirección de entrega</p>
+            <p className="text-dark/50 text-xs mt-0.5">Se usará para pre-llenar el formulario al hacer un pedido</p>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={labelClass}>Colonia</label>
-              <input value={profile.colonia ?? ''} onChange={e => setProfile({...profile, colonia: e.target.value})} className={inputClass} placeholder="Centro" />
-            </div>
-            <div>
-              <label className={labelClass}>Código postal</label>
-              <input value={profile.postalCode ?? ''} onChange={e => setProfile({...profile, postalCode: e.target.value})} className={inputClass} placeholder="44100" maxLength={5} />
-            </div>
+
+          {/* Address picker — auto-fills fields below */}
+          <div>
+            <label className={labelClass}>Buscar con Google Maps</label>
+            <AddressPicker
+              value={profileToAddress(profile)}
+              onChange={() => {}}
+              onAddressDetails={handleAddressDetails}
+              placeholder="Escribe o usa tu ubicación actual..."
+              theme="light"
+            />
+            <p className="text-dark/40 text-xs mt-1.5">Al seleccionar una sugerencia, los campos de abajo se llenan automáticamente</p>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+
+          <div className="border-t border-gray-100 pt-4 space-y-3">
+            <p className="text-dark/50 text-xs font-medium uppercase tracking-wide">Verifica o ajusta los datos</p>
             <div>
-              <label className={labelClass}>Ciudad</label>
-              <input value={profile.city ?? ''} onChange={e => setProfile({...profile, city: e.target.value})} className={inputClass} placeholder="Guadalajara" />
+              <label className={labelClass}>Calle y número</label>
+              <input value={profile.street ?? ''}
+                onChange={e => setProfile({ ...profile, street: e.target.value })}
+                className={inputClass} placeholder="Av. Juárez 123" />
             </div>
-            <div>
-              <label className={labelClass}>Estado</label>
-              <input value={profile.state ?? ''} onChange={e => setProfile({...profile, state: e.target.value})} className={inputClass} placeholder="Jalisco" />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelClass}>Colonia</label>
+                <input value={profile.colonia ?? ''}
+                  onChange={e => setProfile({ ...profile, colonia: e.target.value })}
+                  className={inputClass} placeholder="Centro" />
+              </div>
+              <div>
+                <label className={labelClass}>Código postal</label>
+                <input value={profile.postalCode ?? ''}
+                  onChange={e => setProfile({ ...profile, postalCode: e.target.value })}
+                  className={inputClass} placeholder="44100" maxLength={5} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelClass}>Ciudad</label>
+                <input value={profile.city ?? ''}
+                  onChange={e => setProfile({ ...profile, city: e.target.value })}
+                  className={inputClass} placeholder="Ciudad Juárez" />
+              </div>
+              <div>
+                <label className={labelClass}>Estado</label>
+                <input value={profile.state ?? ''}
+                  onChange={e => setProfile({ ...profile, state: e.target.value })}
+                  className={inputClass} placeholder="Chihuahua" />
+              </div>
             </div>
           </div>
         </div>
 
         {error && <p className="text-red-500 text-xs text-center">{error}</p>}
 
-        <button type="submit" disabled={saving} className="w-full bg-pink text-white font-bold py-3 rounded-2xl hover:bg-pink/90 transition-colors disabled:opacity-50 text-sm flex items-center justify-center gap-2">
+        <button type="submit" disabled={saving}
+          className="w-full bg-pink text-white font-bold py-3 rounded-2xl hover:bg-pink/90 transition-colors disabled:opacity-50 text-sm flex items-center justify-center gap-2">
           {success ? <><CheckCircle2 size={16} /> Guardado</> : saving ? 'Guardando...' : 'Guardar cambios'}
         </button>
       </form>
