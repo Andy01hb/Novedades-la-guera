@@ -116,10 +116,17 @@ export default function StepAddress({ onNext, onDeliveryCostChange, defaultValue
   // ── Phase: select ─────────────────────────────────────────────────────────
   if (phase === 'select') {
     const handleSelectRecoger = () => {
-      setValue('deliveryType', DeliveryType.RECOGER)
-      setValue('deliveryCost', 0)
       onDeliveryCostChange(0)
-      handleSubmit(onNext)()
+      onNext({
+        deliveryType: DeliveryType.RECOGER,
+        deliveryCost: 0,
+        street: '',
+        colonia: '',
+        postalCode: '',
+        city: '',
+        state: '',
+        references: '',
+      })
     }
 
     const handleSelectDomicilio = () => {
