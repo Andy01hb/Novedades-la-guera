@@ -5,6 +5,7 @@ import { getSetting } from '@/lib/settings'
 import ImageUploader from '@/components/admin/ImageUploader'
 import StripeConfigForm from '@/components/admin/StripeConfigForm'
 import ShippingConfig from '@/components/admin/ShippingConfig'
+import AdminsManager from '@/components/admin/AdminsManager'
 
 const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET ?? ''
 
@@ -73,6 +74,16 @@ export default async function ConfiguracionPage() {
           </p>
         </div>
         <ShippingConfig />
+      </div>
+
+      <div className="bg-admin-card rounded-3xl p-6 border border-admin-border mt-6">
+        <div className="mb-5">
+          <p className="text-white font-semibold text-sm">Administradores</p>
+          <p className="text-admin-muted text-xs mt-0.5">
+            Gestiona las cuentas con acceso al panel de administración.
+          </p>
+        </div>
+        <AdminsManager currentUserId={session.user?.id ?? ''} />
       </div>
     </div>
   )
