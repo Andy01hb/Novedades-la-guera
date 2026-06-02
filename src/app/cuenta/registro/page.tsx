@@ -1,12 +1,12 @@
 'use client'
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
 const inputClass = 'w-full px-4 py-3 border border-gray-200 rounded-2xl text-dark text-sm focus:border-pink focus:outline-none transition-colors'
 
-export default function RegistroPage() {
+function RegistroForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const returnTo = searchParams.get('returnTo') ?? '/'
@@ -94,5 +94,13 @@ export default function RegistroPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function RegistroPage() {
+  return (
+    <Suspense>
+      <RegistroForm />
+    </Suspense>
   )
 }
