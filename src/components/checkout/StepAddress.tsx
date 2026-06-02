@@ -7,8 +7,6 @@ import { DeliveryType } from '@prisma/client'
 import AddressPicker, { type AddressDetails } from '@/components/ui/AddressPicker'
 import { Loader2, Truck, Store, MapPin } from 'lucide-react'
 
-const ALLOWED_TYPES = [DeliveryType.LOCAL, DeliveryType.RECOGER] as const
-
 const schema = z.object({
   street:       z.string().min(3, 'Ingresa tu calle y número'),
   colonia:      z.string().min(2, 'Ingresa tu colonia'),
@@ -111,7 +109,7 @@ export default function StepAddress({ onNext, onDeliveryCostChange, defaultValue
     }, 1200)
   }, [city, street]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const selectType = (type: typeof ALLOWED_TYPES[number]) => {
+  const selectType = (type: DeliveryType.LOCAL | DeliveryType.RECOGER) => {
     setValue('deliveryType', type)
     const cost = type === DeliveryType.LOCAL ? (estimate?.cost ?? 0) : 0
     setValue('deliveryCost', cost)
