@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { getStripeClient } from '@/lib/stripe'
 import { z } from 'zod'
 import { DeliveryType } from '@prisma/client'
-import { DELIVERY_COSTS, DeliveryType as DT } from '@/types'
+import { DELIVERY_COSTS } from '@/types'
 
 const CheckoutSchema = z.object({
   customerName: z.string().min(2),
@@ -75,8 +75,8 @@ export async function POST(req: NextRequest) {
 
     // For LOCAL delivery use the client-calculated cost (from ShippingTiers);
     // for fixed types always use the canonical value.
-    const deliveryCost = data.deliveryType === DT.LOCAL
-      ? (data.deliveryCost ?? DELIVERY_COSTS[DT.LOCAL])
+    const deliveryCost = data.deliveryType === DeliveryType.LOCAL
+      ? (data.deliveryCost ?? DELIVERY_COSTS[DeliveryType.LOCAL])
       : DELIVERY_COSTS[data.deliveryType]
     const total = subtotal + deliveryCost
 
