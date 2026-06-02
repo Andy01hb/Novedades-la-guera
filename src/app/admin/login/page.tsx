@@ -1,10 +1,12 @@
 'use client'
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { signIn } from 'next-auth/react'
 import StoreLogo from '@/components/ui/StoreLogo'
 
-export default function AdminLoginPage() {
-  const [email, setEmail] = useState('')
+function AdminLoginForm() {
+  const searchParams = useSearchParams()
+  const [email, setEmail] = useState(searchParams.get('email') ?? '')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -31,9 +33,57 @@ export default function AdminLoginPage() {
   }
 
   return (
+    <form onSubmit={handleSubmit} className="bg-admin-card rounded-3xl p-6 border border-admin-border">
+      <div className="space-y-4">
+        <div>
+          <label className="text-admin-muted text-sm font-medium block mb-1.5">
+            Correo electrónico
+          </label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-4 py-3 bg-admin-bg border border-admin-border rounded-2xl text-white text-sm focus:border-pink outline-none transition-colors"
+            placeholder="admin@novedadeslagueraa.com"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="text-admin-muted text-sm font-medium block mb-1.5">
+            Contraseña
+          </label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full px-4 py-3 bg-admin-bg border border-admin-border rounded-2xl text-white text-sm focus:border-pink outline-none transition-colors"
+            placeholder="••••••••"
+            required
+            autoFocus={!!searchParams.get('email')}
+          />
+        </div>
+
+        {error && (
+          <p className="text-red-400 text-xs text-center">{error}</p>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-pink text-white font-bold py-3 rounded-2xl hover:bg-pink/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loading ? 'Entrando...' : 'Entrar al panel'}
+        </button>
+      </div>
+    </form>
+  )
+}
+
+export default function AdminLoginPage() {
+  return (
     <div className="min-h-screen bg-admin-bg flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        {/* Logo */}
         <div className="text-center mb-8">
           <div className="mx-auto mb-3 w-fit">
             <StoreLogo size={64} />
@@ -42,49 +92,9 @@ export default function AdminLoginPage() {
           <p className="text-admin-muted text-sm mt-1">Novedades La Güera</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-admin-card rounded-3xl p-6 border border-admin-border">
-          <div className="space-y-4">
-            <div>
-              <label className="text-admin-muted text-sm font-medium block mb-1.5">
-                Correo electrónico
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 bg-admin-bg border border-admin-border rounded-2xl text-white text-sm focus:border-pink outline-none transition-colors"
-                placeholder="admin@novedadeslagueraa.com"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="text-admin-muted text-sm font-medium block mb-1.5">
-                Contraseña
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 bg-admin-bg border border-admin-border rounded-2xl text-white text-sm focus:border-pink outline-none transition-colors"
-                placeholder="••••••••"
-                required
-              />
-            </div>
-
-            {error && (
-              <p className="text-red-400 text-xs text-center">{error}</p>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-pink text-white font-bold py-3 rounded-2xl hover:bg-pink/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Entrando...' : 'Entrar al panel'}
-            </button>
-          </div>
-        </form>
+        <Suspense fallback={<div className="bg-admin-card rounded-3xl p-6 border border-admin-border h-48" />}>
+          <AdminLoginForm />
+        </Suspense>
 
         <p className="text-center text-admin-muted text-xs mt-4">
           <a href="/" className="hover:text-white transition-colors">← Volver a la tienda</a>

@@ -1,7 +1,7 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ShoppingCart, Search, Menu, X, User, Package, LogOut, Settings } from 'lucide-react'
+import { ShoppingCart, Search, Menu, X, User, Package, LogOut, Settings, LayoutDashboard } from 'lucide-react'
 import { useCart } from '@/store/cart'
 import { useSession, signOut } from 'next-auth/react'
 import StoreLogo from '@/components/ui/StoreLogo'
@@ -18,8 +18,17 @@ const NAV_LINKS = [
 export default function Navbar({ logoUrl }: { logoUrl?: string | null }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
   const totalItems = useCart((s) => s.totalItems())
   const { data: session } = useSession()
+
+  useEffect(() => {
+    if (!session) { setIsAdmin(false); return }
+    fetch('/api/customer/is-admin')
+      .then((r) => r.json())
+      .then((d) => setIsAdmin(d.isAdmin ?? false))
+      .catch(() => setIsAdmin(false))
+  }, [session])
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-sm">
@@ -91,6 +100,18 @@ export default function Navbar({ logoUrl }: { logoUrl?: string | null }) {
                       className="flex items-center gap-2 px-4 py-2 text-sm text-dark hover:bg-pink/5 hover:text-pink transition-colors">
                       <Settings size={15} /> Mi perfil
                     </Link>
+                    {isAdmin && (
+                      <>
+                        <div className="mx-4 my-1 border-t border-dark/5" />
+                        <Link
+                          href={`/admin/login?email=${encodeURIComponent(session.user?.email ?? '')}`}
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-pink hover:bg-pink/5 transition-colors"
+                        >
+                          <LayoutDashboard size={15} /> Panel Admin
+                        </Link>
+                      </>
+                    )}
                     <button onClick={() => signOut({ callbackUrl: '/' })}
                       className="w-full flex items-center gap-2 px-4 py-2 text-sm text-dark/60 hover:bg-red-50 hover:text-red-500 transition-colors">
                       <LogOut size={15} /> Cerrar sesión
