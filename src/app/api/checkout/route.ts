@@ -8,21 +8,29 @@ import { DeliveryType } from '@prisma/client'
 import { DELIVERY_COSTS } from '@/types'
 
 const CheckoutSchema = z.object({
-  customerName: z.string().min(2),
+  customerName:  z.string().min(2),
   customerPhone: z.string().min(10),
   customerEmail: z.string().email(),
-  street: z.string().min(3),
-  colonia: z.string().min(2),
-  postalCode: z.string().length(5),
-  city: z.string().min(2),
-  state: z.string().min(2),
-  references: z.string().optional().default(''),
-  deliveryType: z.nativeEnum(DeliveryType),
-  deliveryCost: z.number().int().min(0).optional(),
+  street:        z.string().default(''),
+  colonia:       z.string().default(''),
+  postalCode:    z.string().default(''),
+  city:          z.string().default(''),
+  state:         z.string().default(''),
+  references:    z.string().optional().default(''),
+  deliveryType:  z.nativeEnum(DeliveryType),
+  deliveryCost:  z.number().int().min(0).optional(),
   items: z.array(z.object({
     productId: z.string(),
-    quantity: z.number().int().positive(),
+    quantity:  z.number().int().positive(),
   })).min(1),
+}).superRefine((data, ctx) => {
+  if (data.deliveryType !== DeliveryType.RECOGER) {
+    if (data.street.length < 3)      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Calle requerida', path: ['street'] })
+    if (data.colonia.length < 2)     ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Colonia requerida', path: ['colonia'] })
+    if (data.postalCode.length !== 5) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'CP de 5 dígitos', path: ['postalCode'] })
+    if (data.city.length < 2)        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Ciudad requerida', path: ['city'] })
+    if (data.state.length < 2)       ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Estado requerido', path: ['state'] })
+  }
 })
 
 export async function POST(req: NextRequest) {
