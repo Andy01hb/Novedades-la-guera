@@ -105,7 +105,7 @@ export default function StepAddress({ onNext, onDeliveryCostChange, defaultValue
   const city   = watch('city')
   const street = watch('street')
   useEffect(() => {
-    if (phase !== 'address' || !city || !street || pickerAddress) return
+    if (phase !== 'address' || !city || !street) return
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
       const manual = [street, city, watch('state')].filter(Boolean).join(', ')
