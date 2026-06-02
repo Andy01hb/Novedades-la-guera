@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     const parsed = body.tiers.map((t: unknown) => tierSchema.parse(t))
     await prisma.shippingTier.deleteMany()
     await prisma.shippingTier.createMany({
-      data: parsed.map((t, i) => ({ id: crypto.randomUUID(), ...t, order: i })),
+      data: parsed.map((t: z.infer<typeof tierSchema>, i: number) => ({ id: crypto.randomUUID(), ...t, order: i })),
     })
   }
 
