@@ -4,9 +4,10 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { DeliveryType } from '@prisma/client'
-import { DELIVERY_COSTS } from '@/types'
 import AddressPicker, { type AddressDetails } from '@/components/ui/AddressPicker'
-import { Loader2, Truck, Package, Store, MapPin } from 'lucide-react'
+import { Loader2, Truck, Store, MapPin } from 'lucide-react'
+
+const ALLOWED_TYPES = [DeliveryType.LOCAL, DeliveryType.RECOGER] as const
 
 const schema = z.object({
   street:       z.string().min(3, 'Ingresa tu calle y número'),
@@ -15,7 +16,7 @@ const schema = z.object({
   city:         z.string().min(2, 'Ingresa la ciudad'),
   state:        z.string().min(2, 'Ingresa el estado'),
   references:   z.string(),
-  deliveryType: z.nativeEnum(DeliveryType),
+  deliveryType: z.enum([DeliveryType.LOCAL, DeliveryType.RECOGER]),
   deliveryCost: z.number().int().min(0),
 })
 
@@ -61,9 +62,7 @@ export default function StepAddress({ onNext, onDeliveryCostChange, defaultValue
 
   // Notify parent when delivery cost changes
   useEffect(() => {
-    const cost = selectedType === DeliveryType.LOCAL
-      ? (estimate?.cost ?? 0)
-      : DELIVERY_COSTS[selectedType]
+    const cost = selectedType === DeliveryType.LOCAL ? (estimate?.cost ?? 0) : 0
     setValue('deliveryCost', cost)
     onDeliveryCostChange(cost)
   }, [selectedType, estimate]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -112,9 +111,9 @@ export default function StepAddress({ onNext, onDeliveryCostChange, defaultValue
     }, 1200)
   }, [city, street]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const selectType = (type: DeliveryType) => {
+  const selectType = (type: typeof ALLOWED_TYPES[number]) => {
     setValue('deliveryType', type)
-    const cost = type === DeliveryType.LOCAL ? (estimate?.cost ?? 0) : DELIVERY_COSTS[type]
+    const cost = type === DeliveryType.LOCAL ? (estimate?.cost ?? 0) : 0
     setValue('deliveryCost', cost)
     onDeliveryCostChange(cost)
   }
@@ -217,20 +216,6 @@ export default function StepAddress({ onNext, onDeliveryCostChange, defaultValue
               <p className="text-xs text-dark/50">Arturo B. de la Garza #108, Juárez</p>
             </div>
             <span className="font-bold text-sm text-green-600">Gratis</span>
-          </button>
-
-          {/* National shipping */}
-          <button type="button" onClick={() => selectType(DeliveryType.PAQUETERIA)}
-            className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 text-left transition-all ${selectedType === DeliveryType.PAQUETERIA ? 'border-pink bg-pink/5' : 'border-dark/10 hover:border-pink/40'}`}>
-            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${selectedType === DeliveryType.PAQUETERIA ? 'border-pink' : 'border-dark/30'}`}>
-              {selectedType === DeliveryType.PAQUETERIA && <div className="w-2.5 h-2.5 rounded-full bg-pink" />}
-            </div>
-            <Package size={18} className={selectedType === DeliveryType.PAQUETERIA ? 'text-pink' : 'text-dark/40'} />
-            <div className="flex-1">
-              <p className="font-semibold text-dark text-sm">Paquetería nacional</p>
-              <p className="text-xs text-dark/50">República mexicana · 3-5 días hábiles</p>
-            </div>
-            <span className="font-bold text-sm text-dark">{formatMXN(DELIVERY_COSTS[DeliveryType.PAQUETERIA])}</span>
           </button>
 
         </div>
