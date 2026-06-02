@@ -1,8 +1,9 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
-import { ShoppingCart, Search, Menu, X } from 'lucide-react'
+import { ShoppingCart, Search, Menu, X, User, Package, LogOut } from 'lucide-react'
 import { useCart } from '@/store/cart'
+import { useSession, signOut } from 'next-auth/react'
 import StoreLogo from '@/components/ui/StoreLogo'
 
 const NAV_LINKS = [
@@ -16,7 +17,9 @@ const NAV_LINKS = [
 
 export default function Navbar({ logoUrl }: { logoUrl?: string | null }) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
   const totalItems = useCart((s) => s.totalItems())
+  const { data: session } = useSession()
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-sm">
@@ -63,6 +66,41 @@ export default function Navbar({ logoUrl }: { logoUrl?: string | null }) {
               </span>
             )}
           </Link>
+
+          {/* User menu */}
+          <div className="relative">
+            {session ? (
+              <>
+                <button
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="w-9 h-9 rounded-full bg-pink/10 flex items-center justify-center overflow-hidden hover:ring-2 hover:ring-pink transition-all"
+                >
+                  {session.user?.image
+                    ? <img src={session.user.image} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    : <User size={16} className="text-pink" />
+                  }
+                </button>
+                {userMenuOpen && (
+                  <div className="absolute right-0 top-12 w-48 bg-white rounded-2xl shadow-lg border border-dark/5 py-2 z-50">
+                    <p className="px-4 py-2 text-xs text-dark/40 truncate">{session.user?.name}</p>
+                    <Link href="/cuenta/pedidos" onClick={() => setUserMenuOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-dark hover:bg-pink/5 hover:text-pink transition-colors">
+                      <Package size={15} /> Mis pedidos
+                    </Link>
+                    <button onClick={() => signOut({ callbackUrl: '/' })}
+                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-dark/60 hover:bg-red-50 hover:text-red-500 transition-colors">
+                      <LogOut size={15} /> Cerrar sesión
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <Link href="/cuenta/login"
+                className="hidden sm:flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-dark/70 hover:text-pink transition-colors">
+                <User size={16} /> Iniciar sesión
+              </Link>
+            )}
+          </div>
 
           <button
             className="lg:hidden w-10 h-10 flex items-center justify-center rounded-full hover:bg-pink/5 text-dark hover:text-pink transition-colors"

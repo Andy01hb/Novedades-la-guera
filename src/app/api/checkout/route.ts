@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth/next'
+import { customerAuthOptions } from '@/lib/customer-auth'
 import { prisma } from '@/lib/prisma'
 import { getStripeClient } from '@/lib/stripe'
 import { z } from 'zod'
@@ -23,6 +25,11 @@ const CheckoutSchema = z.object({
 })
 
 export async function POST(req: NextRequest) {
+  const session = await getServerSession(customerAuthOptions)
+  if (!session) {
+    return NextResponse.json({ error: 'Debes iniciar sesión para realizar un pedido' }, { status: 401 })
+  }
+
   let body: unknown
   try {
     body = await req.json()
@@ -84,6 +91,7 @@ export async function POST(req: NextRequest) {
         deliveryCost,
         subtotal,
         total,
+        customerId: session.user.id,
         status: 'PENDING',
         items: { create: orderItems },
       },

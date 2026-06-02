@@ -4,6 +4,7 @@ import './globals.css'
 import Navbar from '@/components/ui/Navbar'
 import Footer from '@/components/ui/Footer'
 import { getSetting } from '@/lib/settings'
+import CustomerSessionProvider from './CustomerSessionProvider'
 
 const geistSans = localFont({
   src: './fonts/GeistVF.woff',
@@ -50,9 +51,11 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-cream text-dark`}
       >
-        <Navbar logoUrl={logoUrl} />
-        <main>{children}</main>
-        <Footer logoUrl={logoUrl} />
+        <CustomerSessionProvider>
+          <Navbar logoUrl={logoUrl} />
+          <main>{children}</main>
+          <Footer logoUrl={logoUrl} />
+        </CustomerSessionProvider>
       </body>
     </html>
   )
