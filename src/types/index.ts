@@ -26,7 +26,7 @@ export interface CheckoutFormData {
   city: string
   state: string
   references: string
-  deliveryType: DeliveryType.LOCAL | DeliveryType.RECOGER
+  deliveryType: DeliveryType
   deliveryCost: number
 }
 

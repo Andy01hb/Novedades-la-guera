@@ -14,7 +14,7 @@ const schema = z.object({
   city:         z.string().min(2, 'Ingresa la ciudad'),
   state:        z.string().min(2, 'Ingresa el estado'),
   references:   z.string(),
-  deliveryType: z.enum([DeliveryType.LOCAL, DeliveryType.RECOGER]),
+  deliveryType: z.nativeEnum(DeliveryType),
   deliveryCost: z.number().int().min(0),
 })
 
