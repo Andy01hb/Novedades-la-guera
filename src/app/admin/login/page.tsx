@@ -1,8 +1,30 @@
 'use client'
 import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { signIn } from 'next-auth/react'
 import StoreLogo from '@/components/ui/StoreLogo'
+
+async function adminSignIn(email: string, password: string): Promise<boolean> {
+  const csrfRes = await fetch('/api/auth/csrf')
+  const { csrfToken } = await csrfRes.json()
+
+  const params = new URLSearchParams({
+    email,
+    password,
+    csrfToken,
+    callbackUrl: window.location.origin + '/admin/dashboard',
+    json: 'true',
+  })
+
+  const res = await fetch('/api/auth/callback/credentials', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: params.toString(),
+  })
+
+  if (!res.ok) return false
+  const data = await res.json()
+  return !!data.url && !data.url.includes('error=')
+}
 
 function AdminLoginForm() {
   const searchParams = useSearchParams()
@@ -16,17 +38,14 @@ function AdminLoginForm() {
     setLoading(true)
     setError(null)
     try {
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
-      })
-
-      if (result?.error) {
-        setError('Correo o contraseña incorrectos')
-      } else {
+      const ok = await adminSignIn(email, password)
+      if (ok) {
         window.location.href = '/admin/dashboard'
+      } else {
+        setError('Correo o contraseña incorrectos')
       }
+    } catch {
+      setError('Error al conectar con el servidor')
     } finally {
       setLoading(false)
     }
