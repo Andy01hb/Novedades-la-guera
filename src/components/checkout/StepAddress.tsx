@@ -5,20 +5,29 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { DeliveryType } from '@prisma/client'
 import AddressPicker, { type AddressDetails } from '@/components/ui/AddressPicker'
-import { Loader2, Truck, Store, MapPin } from 'lucide-react'
+import { Loader2, Truck, Store, MapPin, ArrowLeft, AlertCircle } from 'lucide-react'
 
 const schema = z.object({
-  street:       z.string().min(3, 'Ingresa tu calle y número'),
-  colonia:      z.string().min(2, 'Ingresa tu colonia'),
-  postalCode:   z.string().length(5, 'El código postal tiene 5 dígitos'),
-  city:         z.string().min(2, 'Ingresa la ciudad'),
-  state:        z.string().min(2, 'Ingresa el estado'),
-  references:   z.string(),
   deliveryType: z.nativeEnum(DeliveryType),
   deliveryCost: z.number().int().min(0),
+  street:       z.string().default(''),
+  colonia:      z.string().default(''),
+  postalCode:   z.string().default(''),
+  city:         z.string().default(''),
+  state:        z.string().default(''),
+  references:   z.string().default(''),
+}).superRefine((data, ctx) => {
+  if (data.deliveryType === DeliveryType.LOCAL) {
+    if (data.street.length < 3)    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Ingresa tu calle y número', path: ['street'] })
+    if (data.colonia.length < 2)   ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Ingresa tu colonia', path: ['colonia'] })
+    if (data.postalCode.length !== 5) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'El código postal tiene 5 dígitos', path: ['postalCode'] })
+    if (data.city.length < 2)      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Ingresa la ciudad', path: ['city'] })
+    if (data.state.length < 2)     ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Ingresa el estado', path: ['state'] })
+  }
 })
 
 type FormData = z.infer<typeof schema>
+type Phase = 'select' | 'address'
 
 interface ShippingEstimate { cost: number; label: string; km: number }
 
@@ -28,9 +37,8 @@ interface Props {
   defaultValues: Partial<FormData>
 }
 
-const inputClass =
-  'w-full px-4 py-3 border-2 border-dark/10 rounded-2xl text-dark text-sm focus:border-pink outline-none transition-colors'
-const labelClass = 'text-sm font-medium text-dark/70 block mb-1.5'
+const inputClass = 'w-full px-4 py-3 border-2 border-dark/10 rounded-2xl text-dark text-sm focus:border-pink outline-none transition-colors'
+const labelClass  = 'text-sm font-medium text-dark/70 block mb-1.5'
 
 function formatMXN(cents: number) {
   return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(cents / 100)
@@ -40,30 +48,25 @@ export default function StepAddress({ onNext, onDeliveryCostChange, defaultValue
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
+      deliveryType: defaultValues.deliveryType ?? DeliveryType.RECOGER,
+      deliveryCost: defaultValues.deliveryCost ?? 0,
       street:       defaultValues.street ?? '',
       colonia:      defaultValues.colonia ?? '',
       postalCode:   defaultValues.postalCode ?? '',
       city:         defaultValues.city ?? '',
       state:        defaultValues.state ?? '',
       references:   defaultValues.references ?? '',
-      deliveryType: defaultValues.deliveryType ?? DeliveryType.LOCAL,
-      deliveryCost: defaultValues.deliveryCost ?? 0,
     },
   })
 
-  const selectedType = watch('deliveryType')
+  const [phase, setPhase] = useState<Phase>('select')
   const [pickerAddress, setPickerAddress] = useState('')
   const [estimate, setEstimate] = useState<ShippingEstimate | null>(null)
   const [estimating, setEstimating] = useState(false)
   const [estimateError, setEstimateError] = useState<string | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Notify parent when delivery cost changes
-  useEffect(() => {
-    const cost = selectedType === DeliveryType.LOCAL ? (estimate?.cost ?? 0) : 0
-    setValue('deliveryCost', cost)
-    onDeliveryCostChange(cost)
-  }, [selectedType, estimate]) // eslint-disable-line react-hooks/exhaustive-deps
+  const selectedType = watch('deliveryType')
 
   const runEstimate = async (address: string) => {
     if (!address || address.length < 8) return
@@ -75,10 +78,12 @@ export default function StepAddress({ onNext, onDeliveryCostChange, defaultValue
       const data = await res.json()
       if (res.ok) {
         setEstimate(data)
-        setValue('deliveryType', DeliveryType.LOCAL)
+        setValue('deliveryCost', data.cost)
+        onDeliveryCostChange(data.cost)
       } else {
         setEstimateError(data.error ?? 'No hay envío disponible para esta dirección')
-        if (selectedType === DeliveryType.LOCAL) setValue('deliveryType', DeliveryType.RECOGER)
+        setValue('deliveryCost', 0)
+        onDeliveryCostChange(0)
       }
     } catch {
       setEstimateError('No se pudo calcular el envío')
@@ -93,15 +98,14 @@ export default function StepAddress({ onNext, onDeliveryCostChange, defaultValue
     if (details.postalCode) setValue('postalCode', details.postalCode)
     if (details.city)       setValue('city', details.city)
     if (details.state)      setValue('state', details.state)
-    // Trigger estimate immediately on confirmed address
     runEstimate(details.address)
   }
 
-  // Debounced re-estimate when city changes manually
-  const city = watch('city')
+  // Debounced estimate when manual fields change (without picker)
+  const city   = watch('city')
   const street = watch('street')
   useEffect(() => {
-    if (!city || !street || pickerAddress) return
+    if (phase !== 'address' || !city || !street || pickerAddress) return
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
       const manual = [street, city, watch('state')].filter(Boolean).join(', ')
@@ -109,16 +113,67 @@ export default function StepAddress({ onNext, onDeliveryCostChange, defaultValue
     }, 1200)
   }, [city, street]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const selectType = (type: DeliveryType) => {
-    setValue('deliveryType', type)
-    const cost = type === DeliveryType.LOCAL ? (estimate?.cost ?? 0) : 0
-    setValue('deliveryCost', cost)
-    onDeliveryCostChange(cost)
+  // ── Phase: select ─────────────────────────────────────────────────────────
+  if (phase === 'select') {
+    const handleSelectRecoger = () => {
+      setValue('deliveryType', DeliveryType.RECOGER)
+      setValue('deliveryCost', 0)
+      onDeliveryCostChange(0)
+      handleSubmit(onNext)()
+    }
+
+    const handleSelectDomicilio = () => {
+      setValue('deliveryType', DeliveryType.LOCAL)
+      setValue('deliveryCost', 0)
+      onDeliveryCostChange(0)
+      setPhase('address')
+    }
+
+    return (
+      <div className="space-y-6">
+        <h2 className="text-2xl font-black text-dark">¿Cómo recibirás tu pedido?</h2>
+
+        <div className="space-y-3">
+          {/* Recoger */}
+          <button type="button" onClick={handleSelectRecoger}
+            className="w-full flex items-center gap-4 p-5 rounded-2xl border-2 border-dark/10 text-left hover:border-pink/50 hover:bg-pink/5 transition-all group">
+            <div className="w-12 h-12 rounded-2xl bg-green-100 flex items-center justify-center shrink-0">
+              <Store size={22} className="text-green-600" />
+            </div>
+            <div className="flex-1">
+              <p className="font-bold text-dark text-base">Recoger en tienda</p>
+              <p className="text-sm text-dark/50 mt-0.5">Arturo B. de la Garza #108, Juárez · Gratis</p>
+            </div>
+            <span className="font-black text-green-600 text-lg shrink-0">Gratis</span>
+          </button>
+
+          {/* Domicilio */}
+          <button type="button" onClick={handleSelectDomicilio}
+            className="w-full flex items-center gap-4 p-5 rounded-2xl border-2 border-dark/10 text-left hover:border-pink/50 hover:bg-pink/5 transition-all group">
+            <div className="w-12 h-12 rounded-2xl bg-pink/10 flex items-center justify-center shrink-0">
+              <Truck size={22} className="text-pink" />
+            </div>
+            <div className="flex-1">
+              <p className="font-bold text-dark text-base">Entrega a domicilio</p>
+              <p className="text-sm text-dark/50 mt-0.5">Ingresa tu dirección para ver disponibilidad y costo</p>
+            </div>
+            <span className="text-dark/30 shrink-0">→</span>
+          </button>
+        </div>
+      </div>
+    )
   }
 
+  // ── Phase: address ─────────────────────────────────────────────────────────
   return (
     <form onSubmit={handleSubmit(onNext)} className="space-y-6">
-      <h2 className="text-2xl font-black text-dark">Dirección de entrega</h2>
+      <div className="flex items-center gap-3">
+        <button type="button" onClick={() => { setPhase('select'); setEstimate(null); setEstimateError(null) }}
+          className="w-9 h-9 rounded-xl border-2 border-dark/10 flex items-center justify-center hover:border-pink transition-colors">
+          <ArrowLeft size={16} className="text-dark/50" />
+        </button>
+        <h2 className="text-2xl font-black text-dark">Entrega a domicilio</h2>
+      </div>
 
       {/* Address picker */}
       <div>
@@ -132,7 +187,7 @@ export default function StepAddress({ onNext, onDeliveryCostChange, defaultValue
           placeholder="Escribe tu dirección o usa tu ubicación..."
           theme="light"
         />
-        <p className="text-dark/40 text-xs mt-1.5">Selecciona una sugerencia para auto-llenar los campos y calcular el envío</p>
+        <p className="text-dark/40 text-xs mt-1.5">Selecciona una sugerencia para auto-llenar los campos y calcular el costo</p>
       </div>
 
       {/* Manual fields */}
@@ -168,60 +223,45 @@ export default function StepAddress({ onNext, onDeliveryCostChange, defaultValue
         </div>
       </div>
 
-      {/* Delivery options */}
-      <div>
-        <h3 className="font-bold text-dark mb-3">Tipo de envío</h3>
-        <div className="space-y-2">
-
-          {/* Local — dynamic */}
-          <button type="button" onClick={() => selectType(DeliveryType.LOCAL)}
-            disabled={!estimate && !estimating}
-            className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 text-left transition-all ${
-              selectedType === DeliveryType.LOCAL && estimate
-                ? 'border-pink bg-pink/5'
-                : 'border-dark/10 hover:border-pink/40 disabled:opacity-50 disabled:cursor-not-allowed'
-            }`}>
-            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${selectedType === DeliveryType.LOCAL && estimate ? 'border-pink' : 'border-dark/30'}`}>
-              {selectedType === DeliveryType.LOCAL && estimate && <div className="w-2.5 h-2.5 rounded-full bg-pink" />}
-            </div>
-            <Truck size={18} className={selectedType === DeliveryType.LOCAL ? 'text-pink' : 'text-dark/40'} />
-            <div className="flex-1">
-              <p className="font-semibold text-dark text-sm">Entrega a domicilio</p>
-              {estimating ? (
-                <p className="text-xs text-dark/40 flex items-center gap-1"><Loader2 size={11} className="animate-spin" /> Calculando...</p>
-              ) : estimate ? (
-                <p className="text-xs text-dark/50">{estimate.label} · {estimate.km} km</p>
-              ) : estimateError ? (
-                <p className="text-xs text-red-400">{estimateError}</p>
-              ) : (
-                <p className="text-xs text-dark/40">Ingresa tu dirección para ver el costo</p>
-              )}
-            </div>
-            <span className={`font-bold text-sm shrink-0 ${estimate ? 'text-dark' : 'text-dark/30'}`}>
-              {estimating ? '...' : estimate ? formatMXN(estimate.cost) : '—'}
-            </span>
-          </button>
-
-          {/* Pickup */}
-          <button type="button" onClick={() => selectType(DeliveryType.RECOGER)}
-            className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 text-left transition-all ${selectedType === DeliveryType.RECOGER ? 'border-pink bg-pink/5' : 'border-dark/10 hover:border-pink/40'}`}>
-            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${selectedType === DeliveryType.RECOGER ? 'border-pink' : 'border-dark/30'}`}>
-              {selectedType === DeliveryType.RECOGER && <div className="w-2.5 h-2.5 rounded-full bg-pink" />}
-            </div>
-            <Store size={18} className={selectedType === DeliveryType.RECOGER ? 'text-pink' : 'text-dark/40'} />
-            <div className="flex-1">
-              <p className="font-semibold text-dark text-sm">Recoger en tienda</p>
-              <p className="text-xs text-dark/50">Arturo B. de la Garza #108, Juárez</p>
-            </div>
-            <span className="font-bold text-sm text-green-600">Gratis</span>
-          </button>
-
+      {/* Shipping estimate result */}
+      {estimating && (
+        <div className="flex items-center gap-2 p-4 rounded-2xl border-2 border-dark/10 text-dark/50 text-sm">
+          <Loader2 size={16} className="animate-spin text-pink" />
+          Calculando costo de envío...
         </div>
-        {errors.deliveryType && <p className="text-red-500 text-xs mt-2">{errors.deliveryType.message}</p>}
-      </div>
+      )}
 
-      <button type="submit" className="btn-primary w-full">
-        Continuar al pago &rarr;
+      {!estimating && estimate && (
+        <div className="flex items-center justify-between p-4 rounded-2xl border-2 border-green-200 bg-green-50">
+          <div className="flex items-center gap-3">
+            <Truck size={18} className="text-green-600" />
+            <div>
+              <p className="font-semibold text-dark text-sm">{estimate.label}</p>
+              <p className="text-xs text-dark/50">{estimate.km} km desde la tienda</p>
+            </div>
+          </div>
+          <span className="font-black text-green-700 text-base">{formatMXN(estimate.cost)}</span>
+        </div>
+      )}
+
+      {!estimating && estimateError && (
+        <div className="p-4 rounded-2xl border-2 border-red-200 bg-red-50 space-y-2">
+          <div className="flex items-center gap-2 text-red-600 text-sm font-medium">
+            <AlertCircle size={16} /> {estimateError}
+          </div>
+          <p className="text-xs text-dark/50">
+            No hay envío disponible para esta dirección.{' '}
+            <button type="button" onClick={() => { setPhase('select'); setEstimate(null); setEstimateError(null) }}
+              className="text-pink font-semibold underline">
+              ¿Quieres recoger en la tienda?
+            </button>
+          </p>
+        </div>
+      )}
+
+      <button type="submit" disabled={estimating || (!estimate && !estimateError && selectedType === DeliveryType.LOCAL)}
+        className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed">
+        {estimating ? 'Calculando envío...' : 'Continuar al pago →'}
       </button>
     </form>
   )
