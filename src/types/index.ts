@@ -27,6 +27,7 @@ export interface CheckoutFormData {
   state: string
   references: string
   deliveryType: DeliveryType
+  deliveryCost: number
 }
 
 export interface ProductPublic {

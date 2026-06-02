@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/store/cart'
-import { CheckoutFormData, DELIVERY_COSTS } from '@/types'
+import { CheckoutFormData } from '@/types'
 import { DeliveryType } from '@prisma/client'
 import StepPersonal from '@/components/checkout/StepPersonal'
 import StepAddress from '@/components/checkout/StepAddress'
@@ -19,13 +19,13 @@ export default function CheckoutPage() {
   const [step, setStep] = useState(0)
   const [formData, setFormData] = useState<Partial<CheckoutFormData>>({
     deliveryType: DeliveryType.LOCAL,
+    deliveryCost: 0,
   })
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [orderId, setOrderId] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
 
-  const currentDeliveryType = (formData.deliveryType as DeliveryType) ?? DeliveryType.LOCAL
-  const deliveryCost = DELIVERY_COSTS[currentDeliveryType]
+  const deliveryCost = formData.deliveryCost ?? 0
   const total = subtotal() + deliveryCost
 
   const formatPrice = (cents: number) =>
@@ -117,7 +117,11 @@ export default function CheckoutPage() {
             <StepPersonal onNext={handleStep1} defaultValues={formData} />
           )}
           {step === 1 && (
-            <StepAddress onNext={handleStep2} defaultValues={formData} />
+            <StepAddress
+              onNext={handleStep2}
+              onDeliveryCostChange={(cost) => setFormData(prev => ({ ...prev, deliveryCost: cost }))}
+              defaultValues={formData}
+            />
           )}
           {step === 2 && clientSecret && (
             <StepPayment clientSecret={clientSecret} onSuccess={handlePaymentSuccess} />

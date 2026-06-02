@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { getStripeClient } from '@/lib/stripe'
 import { z } from 'zod'
 import { DeliveryType } from '@prisma/client'
-import { DELIVERY_COSTS } from '@/types'
+import { DELIVERY_COSTS, DeliveryType as DT } from '@/types'
 
 const CheckoutSchema = z.object({
   customerName: z.string().min(2),
@@ -18,6 +18,7 @@ const CheckoutSchema = z.object({
   state: z.string().min(2),
   references: z.string().optional().default(''),
   deliveryType: z.nativeEnum(DeliveryType),
+  deliveryCost: z.number().int().min(0).optional(),
   items: z.array(z.object({
     productId: z.string(),
     quantity: z.number().int().positive(),
@@ -72,7 +73,11 @@ export async function POST(req: NextRequest) {
       return { productId: item.productId, quantity: item.quantity, unitPrice }
     })
 
-    const deliveryCost = DELIVERY_COSTS[data.deliveryType]
+    // For LOCAL delivery use the client-calculated cost (from ShippingTiers);
+    // for fixed types always use the canonical value.
+    const deliveryCost = data.deliveryType === DT.LOCAL
+      ? (data.deliveryCost ?? DELIVERY_COSTS[DT.LOCAL])
+      : DELIVERY_COSTS[data.deliveryType]
     const total = subtotal + deliveryCost
 
     // Crear pedido en estado PENDING antes del pago
