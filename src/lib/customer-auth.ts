@@ -9,7 +9,23 @@ if (!process.env.CUSTOMER_NEXTAUTH_SECRET) {
   throw new Error('CUSTOMER_NEXTAUTH_SECRET env var is not set')
 }
 
+const secure = process.env.NODE_ENV === 'production'
+
 export const customerAuthOptions: NextAuthOptions = {
+  cookies: {
+    sessionToken: {
+      name: 'customer-session-token',
+      options: { httpOnly: true, sameSite: 'lax', path: '/', secure },
+    },
+    callbackUrl: {
+      name: 'customer-callback-url',
+      options: { sameSite: 'lax', path: '/', secure },
+    },
+    csrfToken: {
+      name: 'customer-csrf-token',
+      options: { httpOnly: true, sameSite: 'lax', path: '/', secure },
+    },
+  },
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
