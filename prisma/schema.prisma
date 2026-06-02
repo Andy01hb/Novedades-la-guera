@@ -61,8 +61,25 @@ model Customer {
   image      String?
   provider   String?
   providerId String?
+  street     String?
+  colonia    String?
+  postalCode String?
+  city       String?
+  state      String?
+  phone      String?
   createdAt  DateTime @default(now())
   orders     Order[]
+}
+
+model ShippingTier {
+  id         String  @id @default(cuid())
+  label      String
+  minKm      Float
+  maxKm      Float?
+  fixedPrice Int?
+  basePrice  Int?
+  pricePerKm Int?
+  order      Int     @default(0)
 }
 
 model Order {

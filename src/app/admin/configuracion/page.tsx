@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { getSetting } from '@/lib/settings'
 import ImageUploader from '@/components/admin/ImageUploader'
 import StripeConfigForm from '@/components/admin/StripeConfigForm'
+import ShippingConfig from '@/components/admin/ShippingConfig'
 
 const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET ?? ''
 
@@ -62,6 +63,16 @@ export default async function ConfiguracionPage() {
           </p>
         </div>
         <StripeConfigForm />
+      </div>
+
+      <div className="bg-admin-card rounded-3xl p-6 border border-admin-border mt-6">
+        <div className="mb-5">
+          <p className="text-white font-semibold text-sm">Costos de envío</p>
+          <p className="text-admin-muted text-xs mt-0.5">
+            Configura rangos de distancia y precios. Google Maps calcula la distancia automáticamente.
+          </p>
+        </div>
+        <ShippingConfig />
       </div>
     </div>
   )

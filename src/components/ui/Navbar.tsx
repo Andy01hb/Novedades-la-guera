@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
-import { ShoppingCart, Search, Menu, X, User, Package, LogOut } from 'lucide-react'
+import { ShoppingCart, Search, Menu, X, User, Package, LogOut, Settings } from 'lucide-react'
 import { useCart } from '@/store/cart'
 import { useSession, signOut } from 'next-auth/react'
 import StoreLogo from '@/components/ui/StoreLogo'
@@ -86,6 +86,10 @@ export default function Navbar({ logoUrl }: { logoUrl?: string | null }) {
                     <Link href="/cuenta/pedidos" onClick={() => setUserMenuOpen(false)}
                       className="flex items-center gap-2 px-4 py-2 text-sm text-dark hover:bg-pink/5 hover:text-pink transition-colors">
                       <Package size={15} /> Mis pedidos
+                    </Link>
+                    <Link href="/cuenta/perfil" onClick={() => setUserMenuOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-dark hover:bg-pink/5 hover:text-pink transition-colors">
+                      <Settings size={15} /> Mi perfil
                     </Link>
                     <button onClick={() => signOut({ callbackUrl: '/' })}
                       className="w-full flex items-center gap-2 px-4 py-2 text-sm text-dark/60 hover:bg-red-50 hover:text-red-500 transition-colors">
