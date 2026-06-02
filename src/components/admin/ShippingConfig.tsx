@@ -29,8 +29,11 @@ function parseMXN(val: string): number | null {
 }
 
 function tierKey(t: Tier) {
-  const { id: _id, ...rest } = t
-  return JSON.stringify(rest)
+  return JSON.stringify({
+    label: t.label, minKm: t.minKm, maxKm: t.maxKm,
+    fixedPrice: t.fixedPrice, basePrice: t.basePrice,
+    pricePerKm: t.pricePerKm, order: t.order, pricingMode: t.pricingMode,
+  })
 }
 
 function StatusBadge({ dirty, isNew }: { dirty: boolean; isNew?: boolean }) {

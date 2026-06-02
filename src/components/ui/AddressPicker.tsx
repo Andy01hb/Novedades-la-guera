@@ -195,6 +195,7 @@ export default function AddressPicker({ value, onChange, onAddressDetails, place
       {confirmed && (
         <div className={`rounded-2xl overflow-hidden border ${dark ? 'border-admin-border' : 'border-gray-200'}`}>
           {!mapError ? (
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={`/api/maps/static-map?q=${encodeURIComponent(confirmed)}`}
               alt="Mapa"
