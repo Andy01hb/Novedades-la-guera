@@ -109,7 +109,7 @@ export default function StepAddress({ onNext, onDeliveryCostChange, defaultValue
     }, 1200)
   }, [city, street]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const selectType = (type: DeliveryType.LOCAL | DeliveryType.RECOGER) => {
+  const selectType = (type: DeliveryType) => {
     setValue('deliveryType', type)
     const cost = type === DeliveryType.LOCAL ? (estimate?.cost ?? 0) : 0
     setValue('deliveryCost', cost)
