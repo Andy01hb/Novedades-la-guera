@@ -10,12 +10,12 @@ import { Loader2, Truck, Store, MapPin, ArrowLeft, AlertCircle } from 'lucide-re
 const schema = z.object({
   deliveryType: z.nativeEnum(DeliveryType),
   deliveryCost: z.number().int().min(0),
-  street:       z.string().default(''),
-  colonia:      z.string().default(''),
-  postalCode:   z.string().default(''),
-  city:         z.string().default(''),
-  state:        z.string().default(''),
-  references:   z.string().default(''),
+  street:       z.string(),
+  colonia:      z.string(),
+  postalCode:   z.string(),
+  city:         z.string(),
+  state:        z.string(),
+  references:   z.string(),
 }).superRefine((data, ctx) => {
   if (data.deliveryType === DeliveryType.LOCAL) {
     if (data.street.length < 3)    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Ingresa tu calle y número', path: ['street'] })
