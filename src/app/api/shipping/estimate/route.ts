@@ -10,6 +10,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(result)
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Error al calcular el envío'
-    return NextResponse.json({ error: msg }, { status: 400 })
+    const status = msg === 'No hay tarifas de envío configuradas.' ? 503 : 400
+    return NextResponse.json({ error: msg }, { status })
   }
 }
