@@ -136,33 +136,46 @@ export async function POST(req: NextRequest) {
   let paymentIntent: { id: string; client_secret: string | null }
   try {
     const stripe = await getStripeClient()
-    paymentIntent = await stripe.paymentIntents.create({
-      amount: total,
-      currency: 'mxn',
-      metadata: { orderId: order.id },
-      automatic_payment_methods: { enabled: true },
-    })
+    paymentIntent = await stripe.paymentIntents.create(
+      {
+        amount: total,
+        currency: 'mxn',
+        metadata: { orderId: order.id },
+        automatic_payment_methods: { enabled: true },
+      },
+      { idempotencyKey: order.id }
+    )
   } catch {
-    // Stripe falló: revertir el stock y cancelar el pedido
-    await prisma.$transaction(async (tx) => {
-      for (const item of orderItems) {
-        await tx.product.update({
-          where: { id: item.productId },
-          data: { stock: { increment: item.quantity } },
-        })
-      }
-      await tx.order.update({ where: { id: order.id }, data: { status: 'CANCELLED' } })
-    })
+    // Stripe falló: intentar revertir el stock y cancelar el pedido
+    try {
+      await prisma.$transaction(async (tx) => {
+        for (const item of orderItems) {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { stock: { increment: item.quantity } },
+          })
+        }
+        await tx.order.update({ where: { id: order.id }, data: { status: 'CANCELLED' } })
+      })
+    } catch (compensationErr) {
+      console.error('Failed to compensate order after Stripe error:', compensationErr)
+    }
     return NextResponse.json(
       { error: 'Error al conectar con el procesador de pagos. Por favor intenta de nuevo.' },
       { status: 500 }
     )
   }
 
-  await prisma.order.update({
-    where: { id: order.id },
-    data: { stripePaymentIntentId: paymentIntent.id },
-  })
+  try {
+    await prisma.order.update({
+      where: { id: order.id },
+      data: { stripePaymentIntentId: paymentIntent.id },
+    })
+  } catch (err) {
+    console.error('Failed to persist stripePaymentIntentId for order', order.id, err)
+    // El pedido existe y el PI existe; el admin puede reconciliar manualmente.
+    // No bloqueamos al cliente — continuamos.
+  }
 
   return NextResponse.json({ clientSecret: paymentIntent.client_secret, orderId: order.id })
 }
