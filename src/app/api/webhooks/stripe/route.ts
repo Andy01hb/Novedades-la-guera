@@ -3,6 +3,24 @@ import { getStripeClient, getStripeWebhookSecret } from '@/lib/stripe'
 import { prisma } from '@/lib/prisma'
 import Stripe from 'stripe'
 
+async function restoreStockAndCancel(piId: string): Promise<void> {
+  const order = await prisma.order.findUnique({
+    where: { stripePaymentIntentId: piId },
+    include: { items: true },
+  })
+  if (!order || order.status !== 'PENDING') return
+
+  await prisma.$transaction(async (tx) => {
+    for (const item of order.items) {
+      await tx.product.update({
+        where: { id: item.productId },
+        data: { stock: { increment: item.quantity } },
+      })
+    }
+    await tx.order.update({ where: { id: order.id }, data: { status: 'CANCELLED' } })
+  })
+}
+
 export async function POST(req: NextRequest) {
   const body = await req.text()
   const sig = req.headers.get('stripe-signature')
@@ -23,19 +41,23 @@ export async function POST(req: NextRequest) {
 
   if (event.type === 'payment_intent.succeeded') {
     const pi = event.data.object as Stripe.PaymentIntent
-
     try {
       await prisma.order.update({
         where: { stripePaymentIntentId: pi.id },
-        data: {
-          status: 'PREPARING',
-          paidAt: new Date(),
-        },
+        data: { status: 'PREPARING', paidAt: new Date() },
       })
     } catch (err) {
       console.error('Failed to update order after payment:', err)
-      // Return 200 to Stripe anyway — the event will not be retried for DB errors
-      // but we log it for manual review
+      // Retornamos 200 para que Stripe no reintente; el admin verá el pedido en PENDING
+    }
+  }
+
+  if (event.type === 'payment_intent.payment_failed' || event.type === 'payment_intent.canceled') {
+    const pi = event.data.object as Stripe.PaymentIntent
+    try {
+      await restoreStockAndCancel(pi.id)
+    } catch (err) {
+      console.error(`Failed to restore stock on ${event.type}:`, err)
     }
   }
 
