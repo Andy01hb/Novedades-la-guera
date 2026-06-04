@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { limiters, getIp, checkLimit } from '@/lib/ratelimit'
 
 type Component = { long_name: string; types: string[] }
 
@@ -7,6 +8,8 @@ function pick(components: Component[], type: string) {
 }
 
 export async function GET(req: NextRequest) {
+  const limited = await checkLimit(limiters.maps, getIp(req))
+  if (limited) return limited
   const lat = req.nextUrl.searchParams.get('lat')
   const lng = req.nextUrl.searchParams.get('lng')
   if (!lat || !lng) return NextResponse.json({ error: 'Parámetros requeridos' }, { status: 400 })

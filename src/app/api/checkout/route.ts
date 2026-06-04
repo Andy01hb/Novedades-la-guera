@@ -7,6 +7,7 @@ import { getLocalShippingCost } from '@/lib/shipping'
 import { z } from 'zod'
 import { DeliveryType } from '@prisma/client'
 import { DELIVERY_COSTS } from '@/types'
+import { limiters, checkLimit } from '@/lib/ratelimit'
 
 // deliveryCost eliminado del schema — se calcula server-side
 const CheckoutSchema = z.object({
@@ -53,6 +54,9 @@ export async function POST(req: NextRequest) {
   }
 
   const data = parsed.data
+
+  const checkoutLimited = await checkLimit(limiters.checkout, session.user.id)
+  if (checkoutLimited) return checkoutLimited
 
   // ── 1. Calcular costo de envío server-side ────────────────────────────────
   let deliveryCost: number

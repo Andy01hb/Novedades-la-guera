@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { limiters, getIp, checkLimit } from '@/lib/ratelimit'
 
 const schema = z.object({
   name: z.string().min(2),
@@ -10,6 +11,8 @@ const schema = z.object({
 })
 
 export async function POST(req: NextRequest) {
+  const limited = await checkLimit(limiters.register, getIp(req))
+  if (limited) return limited
   const body = await req.json()
   const parsed = schema.safeParse(body)
   if (!parsed.success) {

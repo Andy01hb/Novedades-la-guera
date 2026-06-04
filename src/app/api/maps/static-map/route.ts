@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { limiters, getIp, checkLimit } from '@/lib/ratelimit'
 
 export async function GET(req: NextRequest) {
+  const limited = await checkLimit(limiters.maps, getIp(req))
+  if (limited) return limited
   const q = req.nextUrl.searchParams.get('q')
   if (!q) return new NextResponse(null, { status: 400 })
 
