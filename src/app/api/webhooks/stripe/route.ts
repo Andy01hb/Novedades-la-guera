@@ -4,20 +4,25 @@ import { prisma } from '@/lib/prisma'
 import Stripe from 'stripe'
 
 async function restoreStockAndCancel(piId: string): Promise<void> {
-  const order = await prisma.order.findUnique({
-    where: { stripePaymentIntentId: piId },
-    include: { items: true },
-  })
-  if (!order || order.status !== 'PENDING') return
-
   await prisma.$transaction(async (tx) => {
+    const order = await tx.order.findUnique({
+      where: { stripePaymentIntentId: piId },
+      include: { items: true },
+    })
+    if (!order || order.status !== 'PENDING') return
+
+    const updated = await tx.order.updateMany({
+      where: { id: order.id, status: 'PENDING' },
+      data: { status: 'CANCELLED' },
+    })
+    if (updated.count === 0) return
+
     for (const item of order.items) {
       await tx.product.update({
         where: { id: item.productId },
         data: { stock: { increment: item.quantity } },
       })
     }
-    await tx.order.update({ where: { id: order.id }, data: { status: 'CANCELLED' } })
   })
 }
 
