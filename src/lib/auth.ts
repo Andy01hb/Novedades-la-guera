@@ -3,6 +3,7 @@ import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
+import { limiters } from '@/lib/ratelimit'
 
 if (!process.env.NEXTAUTH_SECRET) {
   throw new Error('NEXTAUTH_SECRET env var is not set')
@@ -16,8 +17,15 @@ export const authOptions: NextAuthOptions = {
         email: { label: 'Correo', type: 'email' },
         password: { label: 'Contraseña', type: 'password' },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) return null
+
+        const ip = (req?.headers?.['x-forwarded-for'] as string | undefined)
+          ?.split(',')[0]?.trim() ?? 'anonymous'
+        if (limiters.login) {
+          const { success } = await limiters.login.limit(ip)
+          if (!success) throw new Error('RateLimit')
+        }
 
         const user = await prisma.adminUser.findUnique({
           where: { email: credentials.email },
